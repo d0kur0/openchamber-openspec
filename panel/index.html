@@ -1104,6 +1104,42 @@
           white-space: normal;
         }
       }
+      .studio-settings {
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--oc-border);
+        font-size: 12px;
+      }
+      .studio-settings summary {
+        cursor: pointer;
+      }
+      .studio-settings input {
+        width: min(100%, 360px);
+        margin: 8px 8px 8px 0;
+        padding: 8px;
+        background: transparent;
+        color: inherit;
+        border: 1px solid currentColor;
+        border-radius: 6px;
+      }
+      .studio-settings button {
+        padding: 7px 10px;
+        cursor: pointer;
+      }
+      .studio-settings [role="status"] {
+        display: block;
+      }
+      .jira-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 6px;
+      }
+      .jira-links a {
+        font-size: 11px;
+        color: var(--oc-text-primary, inherit);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
     </style>
   </head>
   <body>

@@ -686,6 +686,7 @@ export function mountController(host: HostClient, appRoot: HTMLElement): () => v
     },
   });
   const boardView = mountBoardView(appRoot, {
+    openUrl: (url) => void host.openUrl(url),
     archive: () => archiveView.open(),
     help: () => void openHelp(),
     create: () => {

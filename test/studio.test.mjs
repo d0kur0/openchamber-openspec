@@ -65,3 +65,20 @@ test("Russian is default, English is selectable, persisted values are validated"
   assert.equal(preferences.stage, "all");
   assert.equal(preferences.attention, false);
 });
+
+test("Jira URLs validate the base, preserve context paths and require complete keys", async () => {
+  const { normalizeJiraBase, jiraKeys, jiraUrl, russianHeading } =
+    await import("../build/studio-model.mjs");
+  assert.equal(normalizeJiraBase("javascript:alert(1)"), null);
+  assert.equal(normalizeJiraBase("https://user:pass@example.com"), null);
+  assert.equal(normalizeJiraBase("https://example.com?q=1"), null);
+  assert.equal(
+    jiraUrl("https://example.com/jira/", "DEMO-42"),
+    "https://example.com/jira/browse/DEMO-42",
+  );
+  assert.equal(jiraUrl("", "DEMO-42"), null);
+  assert.deepEqual(jiraKeys("DEMO-42 и DEMO-42; TEST-7. foo-DEMO-4x"), ["DEMO-42", "TEST-7"]);
+  assert.equal(russianHeading("Why"), "Зачем");
+  assert.equal(russianHeading("Scenario: Проверка"), "Сценарий: Проверка");
+  assert.equal(russianHeading("Неизвестный раздел"), "Неизвестный раздел");
+});

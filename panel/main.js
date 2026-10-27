@@ -1,5 +1,75 @@
 "use strict";
 (() => {
+  // src/panel/presentation.ts
+  function normalizeJiraBase(value) {
+    if (typeof value !== "string" || !value.trim()) return "";
+    try {
+      const url = new URL(value.trim());
+      if (!["http:", "https:"].includes(url.protocol) || url.username || url.password || url.search || url.hash)
+        return null;
+      return url.toString().replace(/\/+$/, "");
+    } catch {
+      return null;
+    }
+  }
+  function jiraKeys(text2) {
+    return [
+      ...new Set(
+        Array.from(
+          text2.matchAll(/(?<![\p{L}\p{N}_])[A-Z][A-Z0-9_]*-\d+(?![\p{L}\p{N}_])/gu),
+          (m) => m[0]
+        )
+      )
+    ];
+  }
+  function jiraUrl(base, key) {
+    const safe = normalizeJiraBase(base);
+    return safe && jiraKeys(key).includes(key) ? `${safe}/browse/${encodeURIComponent(key)}` : null;
+  }
+  var headings = {
+    why: "\u0417\u0430\u0447\u0435\u043C",
+    "what changes": "\u0427\u0442\u043E \u043C\u0435\u043D\u044F\u0435\u043C",
+    impact: "\u0427\u0442\u043E \u0437\u0430\u0442\u0440\u0430\u0433\u0438\u0432\u0430\u0435\u043C",
+    compatibility: "\u0421\u043E\u0432\u043C\u0435\u0441\u0442\u0438\u043C\u043E\u0441\u0442\u044C",
+    modifiability: "\u0418\u0437\u043C\u0435\u043D\u044F\u0435\u043C\u043E\u0441\u0442\u044C",
+    modifyability: "\u0418\u0437\u043C\u0435\u043D\u044F\u0435\u043C\u043E\u0441\u0442\u044C",
+    purpose: "\u041D\u0430\u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0435",
+    requirements: "\u0422\u0440\u0435\u0431\u043E\u0432\u0430\u043D\u0438\u044F",
+    capabilities: "\u0412\u043E\u0437\u043C\u043E\u0436\u043D\u043E\u0441\u0442\u0438",
+    "new capabilities": "\u041D\u043E\u0432\u044B\u0435 \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E\u0441\u0442\u0438",
+    "modified capabilities": "\u0418\u0437\u043C\u0435\u043D\u044F\u0435\u043C\u044B\u0435 \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E\u0441\u0442\u0438",
+    context: "\u041A\u043E\u043D\u0442\u0435\u043A\u0441\u0442",
+    "goals / non-goals": "\u0426\u0435\u043B\u0438 \u0438 \u0433\u0440\u0430\u043D\u0438\u0446\u044B",
+    goals: "\u0426\u0435\u043B\u0438",
+    "non-goals": "\u0412\u043D\u0435 \u0437\u0430\u0434\u0430\u0447\u0438",
+    decisions: "\u0420\u0435\u0448\u0435\u043D\u0438\u044F",
+    "risks / trade-offs": "\u0420\u0438\u0441\u043A\u0438 \u0438 \u043A\u043E\u043C\u043F\u0440\u043E\u043C\u0438\u0441\u0441\u044B",
+    "migration plan": "\u041F\u043B\u0430\u043D \u043F\u0435\u0440\u0435\u0445\u043E\u0434\u0430",
+    "open questions": "\u041E\u0442\u043A\u0440\u044B\u0442\u044B\u0435 \u0432\u043E\u043F\u0440\u043E\u0441\u044B",
+    "added requirements": "\u041D\u043E\u0432\u044B\u0435 \u0442\u0440\u0435\u0431\u043E\u0432\u0430\u043D\u0438\u044F",
+    "modified requirements": "\u0418\u0437\u043C\u0435\u043D\u0451\u043D\u043D\u044B\u0435 \u0442\u0440\u0435\u0431\u043E\u0432\u0430\u043D\u0438\u044F",
+    "removed requirements": "\u0423\u0434\u0430\u043B\u0451\u043D\u043D\u044B\u0435 \u0442\u0440\u0435\u0431\u043E\u0432\u0430\u043D\u0438\u044F",
+    "renamed requirements": "\u041F\u0435\u0440\u0435\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u043D\u043D\u044B\u0435 \u0442\u0440\u0435\u0431\u043E\u0432\u0430\u043D\u0438\u044F"
+  };
+  function russianHeading(text2) {
+    return headings[text2.trim().toLowerCase()] ?? text2.replace(
+      /^(Requirement|Scenario):\s*/i,
+      (_2, type) => type.toLowerCase() === "requirement" ? "\u0422\u0440\u0435\u0431\u043E\u0432\u0430\u043D\u0438\u0435: " : "\u0421\u0446\u0435\u043D\u0430\u0440\u0438\u0439: "
+    );
+  }
+  function russianMarker(text2) {
+    return {
+      WHEN: "\u041A\u041E\u0413\u0414\u0410",
+      THEN: "\u0422\u041E",
+      GIVEN: "\u0414\u0410\u041D\u041E",
+      AND: "\u0418",
+      SHALL: "\u0414\u041E\u041B\u0416\u0415\u041D",
+      MUST: "\u041E\u0411\u042F\u0417\u0410\u041D",
+      SHOULD: "\u0421\u041B\u0415\u0414\u0423\u0415\u0422",
+      MAY: "\u041C\u041E\u0416\u0415\u0422"
+    }[text2] ?? text2;
+  }
+
   // node_modules/@openchamber/sdk/dist/api-version.js
   var OPENCHAMBER_SDK_CHANNEL = "openchamber.sdk";
   var OPENCHAMBER_SDK_API_VERSION = 1;
@@ -1895,9 +1965,9 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
       if (!isChangeName(id) || "summary" in item === "error" in item)
         throw new Error("Invalid summary entry.");
       if ("summary" in item) {
-        const summary = decodeSummary(item.summary);
-        if (summary.id !== id || summary.root !== root2) throw new Error("Invalid summary scope.");
-        return { id, summary };
+        const summary2 = decodeSummary(item.summary);
+        if (summary2.id !== id || summary2.root !== root2) throw new Error("Invalid summary scope.");
+        return { id, summary: summary2 };
       }
       const error = record(item.error);
       return { id, error: { code: string(error.code), message: string(error.message) } };
@@ -2204,7 +2274,8 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     view: "board",
     sort: "name",
     stage: "all",
-    attention: false
+    attention: false,
+    jiraBase: ""
   };
   var persist = () => {
   };
@@ -2217,11 +2288,33 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
   function restorePreferences(value) {
     if (!value || typeof value !== "object") return;
     const p = value;
+    preferences.jiraBase = normalizeJiraBase(p.jiraBase) ?? "";
     preferences.locale = p.locale === "en" ? "en" : "ru";
     preferences.stage = ["all", "planning", "ready", "progress", "complete"].includes(String(p.stage)) ? String(p.stage) : "all";
     preferences.attention = p.attention === true;
     preferences.view = p.view === "list" ? "list" : "board";
     preferences.sort = p.sort === "progress" || p.sort === "remaining" ? p.sort : "name";
+  }
+
+  // src/panel/jira-links.ts
+  function jiraLinks(text2, open) {
+    const row = document.createElement("span");
+    row.className = "jira-links";
+    for (const key of jiraKeys(text2)) {
+      const url = jiraUrl(preferences.jiraBase, key);
+      if (!url) continue;
+      const link = document.createElement("a");
+      link.href = "#";
+      link.textContent = key;
+      link.title = url;
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        open(url);
+      });
+      row.append(link);
+    }
+    row.hidden = !row.childNodes.length;
+    return row;
   }
 
   // src/panel/i18n.ts
@@ -2731,7 +2824,12 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
         const identifier = document.createElement("span");
         identifier.className = "card-id";
         identifier.textContent = id;
-        node.append(title, identifier);
+        node.append(
+          title,
+          identifier,
+          jiraLinks(`${id} ${item.change.goal ?? ""}`, callbacks.openUrl ?? (() => {
+          }))
+        );
         const areas = mountAreaBadges(node);
         node.append(progressLabel, progressRoot, actionRoot, status2);
         entry = {
@@ -2758,6 +2856,14 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
       entry.node.dataset.stage = change.stage;
       entry.node.dataset.attention = String(item.stale || item.unavailable);
       entry.title.title = change.id;
+      const signature = `${preferences.jiraBase} ${change.id} ${change.goal ?? ""}`;
+      if (entry.node.dataset.jira !== signature) {
+        entry.node.querySelector(".jira-links")?.replaceWith(
+          jiraLinks(`${change.id} ${change.goal ?? ""}`, callbacks.openUrl ?? (() => {
+          }))
+        );
+        entry.node.dataset.jira = signature;
+      }
       entry.areas.update(change.affectedAreas);
       const label = bi(
         `\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B: ${change.completedArtifacts}/${change.totalArtifacts}${change.totalTasks === 0 ? " \xB7 \u0437\u0430\u0434\u0430\u0447 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442" : ""}`,
@@ -5235,7 +5341,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     const originalDocument = document2;
     const currentScript = originalDocument.currentScript;
     window2.DocumentFragment;
-    const HTMLTemplateElement = window2.HTMLTemplateElement, Node2 = window2.Node, Element = window2.Element, NodeFilter = window2.NodeFilter;
+    const HTMLTemplateElement = window2.HTMLTemplateElement, Node2 = window2.Node, Element = window2.Element, NodeFilter2 = window2.NodeFilter;
     window2.NamedNodeMap === void 0 && (window2.NamedNodeMap || window2.MozNamedAttrMap);
     window2.HTMLFormElement;
     const DOMParser = window2.DOMParser, trustedTypes = window2.trustedTypes;
@@ -5771,7 +5877,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     };
     const _createNodeIterator = function _createNodeIterator2(root2) {
       const doc = getOwnerDocument ? getOwnerDocument(root2) : root2.ownerDocument;
-      return createNodeIterator.call(doc || root2, root2, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_COMMENT | NodeFilter.SHOW_TEXT | NodeFilter.SHOW_PROCESSING_INSTRUCTION | NodeFilter.SHOW_CDATA_SECTION, null);
+      return createNodeIterator.call(doc || root2, root2, NodeFilter2.SHOW_ELEMENT | NodeFilter2.SHOW_COMMENT | NodeFilter2.SHOW_TEXT | NodeFilter2.SHOW_PROCESSING_INSTRUCTION | NodeFilter2.SHOW_CDATA_SECTION, null);
     };
     const _stripTemplateExpressions = function _stripTemplateExpressions2(value) {
       value = stringReplace(value, MUSTACHE_EXPR$1, " ");
@@ -5783,7 +5889,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       var _node$querySelectorAl;
       node.normalize();
       const doc = getOwnerDocument ? getOwnerDocument(node) : node.ownerDocument;
-      const walker = createNodeIterator.call(doc || node, node, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_COMMENT | NodeFilter.SHOW_CDATA_SECTION | NodeFilter.SHOW_PROCESSING_INSTRUCTION, null);
+      const walker = createNodeIterator.call(doc || node, node, NodeFilter2.SHOW_TEXT | NodeFilter2.SHOW_COMMENT | NodeFilter2.SHOW_CDATA_SECTION | NodeFilter2.SHOW_PROCESSING_INSTRUCTION, null);
       let currentNode = walker.nextNode();
       while (currentNode) {
         currentNode.data = _stripTemplateExpressions(currentNode.data);
@@ -6277,10 +6383,6 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       ALLOWED_ATTR: ["href", "type", "disabled", "checked", "start"],
       ALLOW_DATA_ATTR: false
     });
-    for (const link of fragment.querySelectorAll("a[href]")) {
-      link.dataset.documentHref = link.getAttribute("href");
-      link.setAttribute("href", "#");
-    }
     const used = /* @__PURE__ */ new Set();
     for (const heading of fragment.querySelectorAll("h1,h2,h3,h4,h5,h6")) {
       const base = heading.textContent.toLowerCase().replace(/[^\p{L}\p{N}\s-]/gu, "").trim().replace(/\s+/g, "-") || "heading";
@@ -6288,6 +6390,59 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       for (let i = 1; used.has(id); i++) id = `${base}-${i}`;
       used.add(id);
       heading.id = `document-${id}`;
+    }
+    if (preferences.locale === "ru") {
+      for (const heading of fragment.querySelectorAll("h1,h2,h3,h4,h5,h6")) {
+        const original = heading.textContent ?? "";
+        const translated = russianHeading(original);
+        if (translated !== original) {
+          heading.textContent = translated;
+          heading.setAttribute("title", original);
+        }
+      }
+      const walker = document.createTreeWalker(fragment, NodeFilter.SHOW_TEXT);
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        if (!node.parentElement?.closest("pre,code,a,h1,h2,h3,h4,h5,h6"))
+          node.data = node.data.replace(/\b(SHALL|MUST|SHOULD|MAY)\b/g, russianMarker);
+      }
+      for (const strong of fragment.querySelectorAll("strong")) {
+        if (!strong.closest("pre,code,a"))
+          strong.textContent = russianMarker(strong.textContent ?? "");
+      }
+    }
+    if (preferences.jiraBase) {
+      const walker = document.createTreeWalker(fragment, NodeFilter.SHOW_TEXT);
+      const nodes = [];
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        if (!node.parentElement?.closest("a,pre,code")) nodes.push(node);
+      }
+      for (const node of nodes) {
+        const text2 = node.data;
+        const matches = [
+          ...text2.matchAll(/(?<![\p{L}\p{N}_])[A-Z][A-Z0-9_]*-\d+(?![\p{L}\p{N}_])/gu)
+        ];
+        if (!matches.length) continue;
+        const replacement = document.createDocumentFragment();
+        let offset = 0;
+        for (const match of matches) {
+          const url = jiraUrl(preferences.jiraBase, match[0]);
+          if (!url) continue;
+          replacement.append(text2.slice(offset, match.index));
+          const link = document.createElement("a");
+          link.href = url;
+          link.textContent = match[0];
+          replacement.append(link);
+          offset = match.index + match[0].length;
+        }
+        replacement.append(text2.slice(offset));
+        node.replaceWith(replacement);
+      }
+    }
+    for (const link of fragment.querySelectorAll("a[href]")) {
+      link.dataset.documentHref = link.getAttribute("href");
+      link.setAttribute("href", "#");
     }
     for (const input of fragment.querySelectorAll("input")) {
       if (input.type !== "checkbox") input.remove();
@@ -6394,8 +6549,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
   // src/panel/tasks-view.ts
   function mountTasksView(root2, retryRead) {
     root2.className = "tasks-view";
-    const summary = document.createElement("p");
-    summary.className = "content-status";
+    const summary2 = document.createElement("p");
+    summary2.className = "content-status";
     const progressRoot = document.createElement("div");
     const progress = mountProgress(progressRoot, { value: 0, label: t("Task completion") });
     const issue = document.createElement("p");
@@ -6409,7 +6564,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     });
     const list = document.createElement("ol");
     list.className = "task-rows";
-    root2.append(summary, progressRoot, issue, retryRoot, list);
+    root2.append(summary2, progressRoot, issue, retryRoot, list);
     const rows = /* @__PURE__ */ new Map();
     function clear() {
       rows.clear();
@@ -6419,8 +6574,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       update(state, retryable = true, emptyMessage = "") {
         const tasks = state?.value ?? [];
         const completed = tasks.filter((task) => task.done).length;
-        summary.textContent = tasks.length || state?.error || !retryable ? "" : state?.pending ? "Loading tasks\u2026" : emptyMessage || t("No tasks tracked yet.");
-        summary.hidden = !summary.textContent;
+        summary2.textContent = tasks.length || state?.error || !retryable ? "" : state?.pending ? "Loading tasks\u2026" : emptyMessage || t("No tasks tracked yet.");
+        summary2.hidden = !summary2.textContent;
         progressRoot.hidden = !tasks.length;
         progress.update({
           value: tasks.length ? Math.round(completed / tasks.length * 100) : 0,
@@ -6671,15 +6826,15 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       let entry = files.get(key);
       if (!entry) {
         const node = document.createElement("details");
-        const summary = document.createElement("summary");
+        const summary2 = document.createElement("summary");
         const path2 = document.createElement("span");
         path2.textContent = descriptor.label;
         const status2 = document.createElement("span");
         status2.className = "document-status";
-        summary.append(path2, status2);
+        summary2.append(path2, status2);
         const body3 = document.createElement("div");
         const view = mountDocumentView(body3, { openUrl: callbacks.openUrl });
-        node.append(summary, body3);
+        node.append(summary2, body3);
         node.addEventListener("toggle", () => {
           if (node.open) {
             for (const other of files.values()) if (other.node !== node) other.node.open = false;
@@ -6704,7 +6859,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         }
         title.textContent = state.change.goal || state.change.id;
         areas.update(state.change.affectedAreas);
-        goal.textContent = state.change.id;
+        goal.replaceChildren(
+          document.createTextNode(state.change.id),
+          jiraLinks(`${state.change.id} ${state.change.goal ?? ""}`, callbacks.openUrl)
+        );
         stageBadge.update({
           label: stageLabel(state.change.stage),
           tone: tones[state.change.stage]
@@ -7550,10 +7708,10 @@ Report archived, skipped and blocked changes with reasons. If none qualify, make
           for (const entry of summaries) {
             try {
               if ("error" in entry) throw entry.error;
-              const summary = entry.summary;
+              const summary2 = entry.summary;
               if (epoch !== startingEpoch || scope !== current || operation !== boardOperation)
                 return;
-              const derived = deriveChange(summary);
+              const derived = deriveChange(summary2);
               changes = [...changes.filter((item) => item.id !== derived.id), derived].sort(
                 (a, b) => a.id.localeCompare(b.id)
               );
@@ -7957,6 +8115,7 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
       }
     });
     const boardView = mountBoardView(appRoot, {
+      openUrl: (url) => void host2.openUrl(url),
       archive: () => archiveView.open(),
       help: () => void openHelp(),
       create: () => {
@@ -8175,12 +8334,43 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
   var body = document.createElement("div");
   body.className = "studio-body";
   bar.append(brand, status, language);
-  root.append(bar, body);
+  var settings = document.createElement("details");
+  settings.className = "studio-settings";
+  var summary = document.createElement("summary");
+  var jiraLabel = document.createElement("label");
+  var jiraInput = document.createElement("input");
+  jiraInput.type = "url";
+  jiraInput.placeholder = "https://jira.example.com";
+  var jiraSave = document.createElement("button");
+  jiraSave.type = "button";
+  var jiraStatus = document.createElement("span");
+  jiraStatus.setAttribute("role", "status");
+  jiraLabel.append(jiraInput);
+  settings.append(summary, jiraLabel, jiraSave, jiraStatus);
+  root.append(bar, settings, body);
+  jiraSave.onclick = () => {
+    const base = normalizeJiraBase(jiraInput.value);
+    if (base === null) {
+      jiraStatus.textContent = preferences.locale === "ru" ? "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 HTTP(S)-\u0430\u0434\u0440\u0435\u0441 \u0431\u0435\u0437 \u043F\u0430\u0440\u043E\u043B\u044F, \u043F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u043E\u0432 \u0438 \u044F\u043A\u043E\u0440\u044F" : "Enter an HTTP(S) URL without credentials, query or fragment";
+      return;
+    }
+    preferences.jiraBase = base;
+    remount();
+    savePreferences();
+    jiraStatus.textContent = preferences.locale === "ru" ? "\u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043E" : "Saved";
+  };
   var unmount = mountController(host, body);
   var disposed = false;
   var loaded = false;
   var touched = false;
   function labels() {
+    summary.textContent = preferences.locale === "ru" ? "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u0441\u0441\u044B\u043B\u043E\u043A" : "Link settings";
+    jiraInput.setAttribute(
+      "aria-label",
+      preferences.locale === "ru" ? "\u0410\u0434\u0440\u0435\u0441 Jira" : "Jira base URL"
+    );
+    jiraInput.value = preferences.jiraBase;
+    jiraSave.textContent = preferences.locale === "ru" ? "\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C" : "Save";
     language.value = preferences.locale;
     language.setAttribute("aria-label", t("Interface language"));
     brand.querySelector(".studio-subtitle").textContent = t("Read-only planning view");

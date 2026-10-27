@@ -1,3 +1,4 @@
+import { normalizeJiraBase } from "./presentation.js";
 export type Locale = "ru" | "en";
 export type View = "board" | "list";
 export type Sort = "name" | "progress" | "remaining";
@@ -7,6 +8,7 @@ export const preferences = {
   sort: "name" as Sort,
   stage: "all",
   attention: false,
+  jiraBase: "",
 };
 let persist = () => {};
 export function onPersist(save: () => void) {
@@ -18,6 +20,7 @@ export function savePreferences() {
 export function restorePreferences(value: unknown) {
   if (!value || typeof value !== "object") return;
   const p = value as Record<string, unknown>;
+  preferences.jiraBase = normalizeJiraBase(p.jiraBase) ?? "";
   preferences.locale = p.locale === "en" ? "en" : "ru";
   preferences.stage = ["all", "planning", "ready", "progress", "complete"].includes(String(p.stage))
     ? String(p.stage)

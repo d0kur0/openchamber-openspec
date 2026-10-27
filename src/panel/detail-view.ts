@@ -1,3 +1,4 @@
+import { jiraLinks } from "./jira-links.js";
 import { t, bi } from "./i18n.js";
 import { mountBadge, mountButton, mountTabs } from "@openchamber/sdk/ui";
 import { documentKey, type DocumentDescriptor, type Task } from "../contracts.js";
@@ -275,7 +276,10 @@ export function mountDetailView(
       }
       title.textContent = state.change.goal || state.change.id;
       areas.update(state.change.affectedAreas);
-      goal.textContent = state.change.id;
+      goal.replaceChildren(
+        document.createTextNode(state.change.id),
+        jiraLinks(`${state.change.id} ${state.change.goal ?? ""}`, callbacks.openUrl),
+      );
       stageBadge.update({
         label: stageLabel(state.change.stage),
         tone: tones[state.change.stage],

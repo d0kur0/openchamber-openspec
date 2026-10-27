@@ -80,7 +80,8 @@ test("multiple long documents dispose their rendered content", async () => {
 async function withDocument(run) {
   const bundle = await build({
     stdin: {
-      contents: 'export { mountDocumentView } from "./src/panel/document-view.ts";',
+      contents:
+        'export { mountDocumentView } from "./src/panel/document-view.ts"; export { preferences } from "./src/panel/preferences.ts";',
       resolveDir: process.cwd(),
     },
     bundle: true,
@@ -97,6 +98,9 @@ async function withDocument(run) {
     const html = await readFile(new URL("../panel/index.html", import.meta.url), "utf8");
     await page.addStyleTag({ content: html.match(/<style>([\s\S]*?)<\/style>/)[1] });
     await page.addScriptTag({ content: bundle.outputFiles[0].text });
+    await page.evaluate(() => {
+      viewer.preferences.locale = "en";
+    });
     await page.evaluate(() => {
       const root = document.documentElement;
       root.classList.add("oc-themed");
@@ -309,5 +313,32 @@ test("HTML stays inert, references do not load, and links are document-local or 
     assert.equal(page.context().pages().length, 1);
     assert.equal(await page.evaluate(() => window.pwned), undefined);
     assert.equal(page.url(), "about:blank");
+  });
+});
+
+test("Russian presentation preserves source anchors and code; Jira skips existing links", async () => {
+  await withDocument(async (page) => {
+    await page.evaluate(() => {
+      viewer.preferences.locale = "ru";
+      viewer.preferences.jiraBase = "https://example.com/jira";
+      update(
+        "## Why\n\nDEMO-42 и [DEMO-43](https://example.com/existing).\n\n### Requirement: Проверка\nСистема SHALL работать.\n\n#### Scenario: Успех\n- **WHEN** готово\n- **THEN** успешно\n\n```text\n## Why\nDEMO-44 SHALL\n```",
+      );
+    });
+    assert.equal(await page.getByRole("heading", { name: "Зачем", exact: true }).count(), 1);
+    assert.equal(await page.locator("#document-why").count(), 1);
+    assert.ok(
+      (await page.locator(".document-content").textContent()).includes("Система ДОЛЖЕН работать."),
+    );
+    assert.ok((await page.locator("pre").textContent()).includes("DEMO-44 SHALL"));
+    assert.equal(await page.getByRole("link", { name: "DEMO-44" }).count(), 0);
+    assert.equal(await page.getByRole("link", { name: "DEMO-43" }).count(), 1);
+    await page.getByRole("link", { name: "DEMO-42" }).click();
+    assert.deepEqual(await page.evaluate(() => links), ["https://example.com/jira/browse/DEMO-42"]);
+    await page.evaluate(() => {
+      viewer.preferences.locale = "en";
+      update("## Why\n\nOriginal text");
+    });
+    assert.equal(await page.getByRole("heading", { name: "Why", exact: true }).count(), 1);
   });
 });

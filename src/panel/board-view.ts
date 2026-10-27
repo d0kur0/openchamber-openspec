@@ -1,3 +1,4 @@
+import { jiraLinks } from "./jira-links.js";
 import { t, bi } from "./i18n.js";
 import { mountButton, mountProgress, mountSearchField } from "@openchamber/sdk/ui";
 import type { DerivedChange } from "../model.js";
@@ -42,6 +43,7 @@ export function mountBoardView(
     retry: () => void;
     search: (value: string) => void;
     help: () => void;
+    openUrl?: (url: string) => void;
   },
 ) {
   const main = document.createElement("div");
@@ -271,7 +273,11 @@ export function mountBoardView(
       const identifier = document.createElement("span");
       identifier.className = "card-id";
       identifier.textContent = id;
-      node.append(title, identifier);
+      node.append(
+        title,
+        identifier,
+        jiraLinks(`${id} ${item.change.goal ?? ""}`, callbacks.openUrl ?? (() => {})),
+      );
       const areas = mountAreaBadges(node);
       node.append(progressLabel, progressRoot, actionRoot, status);
       entry = {
@@ -298,6 +304,15 @@ export function mountBoardView(
     entry.node.dataset.stage = change.stage;
     entry.node.dataset.attention = String(item.stale || item.unavailable);
     entry.title.title = change.id;
+    const signature = `${preferences.jiraBase} ${change.id} ${change.goal ?? ""}`;
+    if (entry.node.dataset.jira !== signature) {
+      entry.node
+        .querySelector(".jira-links")
+        ?.replaceWith(
+          jiraLinks(`${change.id} ${change.goal ?? ""}`, callbacks.openUrl ?? (() => {})),
+        );
+      entry.node.dataset.jira = signature;
+    }
     entry.areas.update(change.affectedAreas);
     const label = bi(
       `Документы: ${change.completedArtifacts}/${change.totalArtifacts}${change.totalTasks === 0 ? " · задач пока нет" : ""}`,

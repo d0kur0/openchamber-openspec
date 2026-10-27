@@ -1,3 +1,4 @@
+import { normalizeJiraBase } from "./panel/presentation.js";
 import { connectHost } from "@openchamber/sdk";
 import { applyHostReady } from "@openchamber/sdk/ui";
 import { mountController } from "./panel/controller.js";
@@ -28,12 +29,46 @@ status.setAttribute("role", "status");
 const body = document.createElement("div");
 body.className = "studio-body";
 bar.append(brand, status, language);
-root.append(bar, body);
+const settings = document.createElement("details");
+settings.className = "studio-settings";
+const summary = document.createElement("summary");
+const jiraLabel = document.createElement("label");
+const jiraInput = document.createElement("input");
+jiraInput.type = "url";
+jiraInput.placeholder = "https://jira.example.com";
+const jiraSave = document.createElement("button");
+jiraSave.type = "button";
+const jiraStatus = document.createElement("span");
+jiraStatus.setAttribute("role", "status");
+jiraLabel.append(jiraInput);
+settings.append(summary, jiraLabel, jiraSave, jiraStatus);
+root.append(bar, settings, body);
+jiraSave.onclick = () => {
+  const base = normalizeJiraBase(jiraInput.value);
+  if (base === null) {
+    jiraStatus.textContent =
+      preferences.locale === "ru"
+        ? "Укажите HTTP(S)-адрес без пароля, параметров и якоря"
+        : "Enter an HTTP(S) URL without credentials, query or fragment";
+    return;
+  }
+  preferences.jiraBase = base;
+  remount();
+  savePreferences();
+  jiraStatus.textContent = preferences.locale === "ru" ? "Сохранено" : "Saved";
+};
 let unmount = mountController(host, body),
   disposed = false,
   loaded = false,
   touched = false;
 function labels() {
+  summary.textContent = preferences.locale === "ru" ? "Настройки ссылок" : "Link settings";
+  jiraInput.setAttribute(
+    "aria-label",
+    preferences.locale === "ru" ? "Адрес Jira" : "Jira base URL",
+  );
+  jiraInput.value = preferences.jiraBase;
+  jiraSave.textContent = preferences.locale === "ru" ? "Сохранить" : "Save";
   language.value = preferences.locale;
   language.setAttribute("aria-label", t("Interface language"));
   brand.querySelector(".studio-subtitle")!.textContent = t("Read-only planning view");
