@@ -7336,7 +7336,7 @@ var import_node_http = require("node:http");
 
 // src/service/openspec.ts
 var import_promises = require("node:fs/promises");
-var import_node_path = require("node:path");
+var import_node_path2 = require("node:path");
 var import_yaml = __toESM(require_dist(), 1);
 
 // src/model.ts
@@ -7418,6 +7418,8 @@ function decodeTasks(value) {
 
 // src/service/cli.ts
 var import_node_child_process = require("node:child_process");
+var import_node_fs = require("node:fs");
+var import_node_path = require("node:path");
 var COMMAND_TIMEOUT_MS = 15e3;
 var STDOUT_BYTES = 1024 * 1024;
 var STDERR_BYTES = 64 * 1024;
@@ -7450,10 +7452,17 @@ async function runOpenSpec(directory, args, remainingMs = COMMAND_TIMEOUT_MS, op
   if (remainingMs <= 0)
     return { ok: false, error: serviceError("CLI_TIMEOUT", "OpenSpec request timed out.", 504) };
   return await new Promise((complete) => {
-    const child = (0, import_node_child_process.spawn)(options.binary ?? "openspec", [...args, "--json"], {
-      cwd: directory,
-      stdio: ["ignore", "pipe", "pipe"]
-    });
+    const windowsEntry = process.platform === "win32" && !options.binary ? (process.env.PATH ?? "").split(import_node_path.delimiter).map(
+      (directory2) => (0, import_node_path.join)(directory2, "node_modules", "@fission-ai", "openspec", "bin", "openspec.js")
+    ).find((entry) => (0, import_node_fs.existsSync)(entry)) : void 0;
+    const child = (0, import_node_child_process.spawn)(
+      windowsEntry ? "node" : options.binary ?? "openspec",
+      [...windowsEntry ? [windowsEntry] : [], ...args, "--json"],
+      {
+        cwd: directory,
+        stdio: ["ignore", "pipe", "pipe"]
+      }
+    );
     const stdout = [];
     const stderr = [];
     let stdoutSize = 0;
@@ -7531,11 +7540,11 @@ async function runOpenSpec(directory, args, remainingMs = COMMAND_TIMEOUT_MS, op
 
 // src/service/openspec.ts
 var failure = (error) => ({ ok: false, error });
-var inside = (path, parent) => path === parent || path.startsWith(`${parent}${import_node_path.sep}`);
+var inside = (path, parent) => path === parent || path.startsWith(`${parent}${import_node_path2.sep}`);
 function createOpenSpecAdapter(run = runOpenSpec, remove = import_promises.rm) {
   async function planningScope(root, expectedPlanning) {
     try {
-      const planningRoot = await (0, import_promises.realpath)((0, import_node_path.join)(root, "openspec"));
+      const planningRoot = await (0, import_promises.realpath)((0, import_node_path2.join)(root, "openspec"));
       const stat = await (0, import_promises.lstat)(planningRoot);
       if (!stat.isDirectory()) throw new Error("Planning is not a directory.");
       const planning = JSON.stringify([planningRoot, stat.dev, stat.ino]);
@@ -7553,7 +7562,7 @@ function createOpenSpecAdapter(run = runOpenSpec, remove = import_promises.rm) {
     }
   }
   async function context(directory, expectedRoot, expectedPlanning) {
-    if (!(0, import_node_path.isAbsolute)(directory)) return serviceError("BAD_DIRECTORY", "Directory must be absolute.");
+    if (!(0, import_node_path2.isAbsolute)(directory)) return serviceError("BAD_DIRECTORY", "Directory must be absolute.");
     const result = await run(directory, ["context"]);
     if (!result.ok) return result.error;
     const root = result.value.root?.path;
@@ -7569,7 +7578,7 @@ function createOpenSpecAdapter(run = runOpenSpec, remove = import_promises.rm) {
     return planningScope(canonical, expectedPlanning);
   }
   async function checked(directory, args, current, strict = false, reconcileRootless = false) {
-    if (!(0, import_node_path.isAbsolute)(directory))
+    if (!(0, import_node_path2.isAbsolute)(directory))
       return failure(serviceError("BAD_DIRECTORY", "Directory must be absolute."));
     const result = await run(directory, args);
     const rootlessFailure = reconcileRootless && !result.ok && result.error.code === "OPENSPEC_ERROR" && result.value && !("root" in result.value);
@@ -7612,8 +7621,8 @@ function createOpenSpecAdapter(run = runOpenSpec, remove = import_promises.rm) {
     return { ...current, changeRoot, status: result.value };
   }
   async function validatedChange(current, change, status) {
-    const parent = (0, import_node_path.join)(current.planningRoot, "changes");
-    const target = (0, import_node_path.join)(parent, change);
+    const parent = (0, import_node_path2.join)(current.planningRoot, "changes");
+    const target = (0, import_node_path2.join)(parent, change);
     for (const path of [parent, target]) {
       try {
         if ((await (0, import_promises.lstat)(path)).isSymbolicLink())
@@ -7658,7 +7667,7 @@ function createOpenSpecAdapter(run = runOpenSpec, remove = import_promises.rm) {
             "Change input tree exceeds validation bounds.",
             413
           );
-        const path = (0, import_node_path.join)(directory, entry.name);
+        const path = (0, import_node_path2.join)(directory, entry.name);
         if (entry.isSymbolicLink()) {
           const canonical = await (0, import_promises.realpath)(path);
           if (!inside(canonical, target))
@@ -7683,10 +7692,10 @@ function createOpenSpecAdapter(run = runOpenSpec, remove = import_promises.rm) {
     return error;
   }
   async function validateMetadata(current, change) {
-    const target = (0, import_node_path.join)(current.planningRoot, "changes", change);
+    const target = (0, import_node_path2.join)(current.planningRoot, "changes", change);
     try {
       await validatedChange(current, change);
-      if (!inside(await (0, import_promises.realpath)((0, import_node_path.join)(target, ".openspec.yaml")), target))
+      if (!inside(await (0, import_promises.realpath)((0, import_node_path2.join)(target, ".openspec.yaml")), target))
         throw serviceError(
           "BAD_METADATA_PATH",
           "Goal metadata is outside the selected change.",
@@ -7714,7 +7723,7 @@ function createOpenSpecAdapter(run = runOpenSpec, remove = import_promises.rm) {
     }
   }
   async function metadataFor(state) {
-    const metadataPath = (0, import_node_path.resolve)(state.changeRoot, ".openspec.yaml");
+    const metadataPath = (0, import_node_path2.resolve)(state.changeRoot, ".openspec.yaml");
     let canonical;
     try {
       canonical = await (0, import_promises.realpath)(metadataPath);
@@ -7778,7 +7787,7 @@ function createOpenSpecAdapter(run = runOpenSpec, remove = import_promises.rm) {
   }
   async function summaries(directory, expectedRoot, expectedPlanning) {
     const current = await planningScope(expectedRoot, expectedPlanning);
-    const parent = (0, import_node_path.join)(current.planningRoot, "changes");
+    const parent = (0, import_node_path2.join)(current.planningRoot, "changes");
     if ((await (0, import_promises.lstat)(parent)).isSymbolicLink())
       throw serviceError("BAD_CHANGE_ROOT", "Changes parent is not a real directory.", 409);
     const entries = await (0, import_promises.readdir)(parent, { withFileTypes: true });
@@ -7840,9 +7849,9 @@ function createOpenSpecAdapter(run = runOpenSpec, remove = import_promises.rm) {
       const outputs = entry.existingOutputPaths;
       if (!Array.isArray(outputs)) throw new Error("Invalid artefact outputs.");
       for (const path of outputs) {
-        if (typeof path !== "string" || !(0, import_node_path.isAbsolute)(path)) throw new Error("Invalid output path.");
-        const selector = (0, import_node_path.relative)(state.changeRoot, await (0, import_promises.realpath)(path));
-        if (!selector || selector === ".." || selector.startsWith(`..${import_node_path.sep}`) || (0, import_node_path.isAbsolute)(selector))
+        if (typeof path !== "string" || !(0, import_node_path2.isAbsolute)(path)) throw new Error("Invalid output path.");
+        const selector = (0, import_node_path2.relative)(state.changeRoot, await (0, import_promises.realpath)(path));
+        if (!selector || selector === ".." || selector.startsWith(`..${import_node_path2.sep}`) || (0, import_node_path2.isAbsolute)(selector))
           throw serviceError(
             "BAD_DOCUMENT_PATH",
             "Document path is outside the selected change.",
@@ -7856,7 +7865,7 @@ function createOpenSpecAdapter(run = runOpenSpec, remove = import_promises.rm) {
     );
   }
   async function readDocument(state, selected) {
-    const path = await (0, import_promises.realpath)((0, import_node_path.resolve)(state.changeRoot, selected.selector));
+    const path = await (0, import_promises.realpath)((0, import_node_path2.resolve)(state.changeRoot, selected.selector));
     if (!inside(path, state.changeRoot))
       return failure(
         serviceError("BAD_DOCUMENT_PATH", "Document path is outside the selected change.", 502)
@@ -7940,13 +7949,13 @@ function createOpenSpecAdapter(run = runOpenSpec, remove = import_promises.rm) {
     if (!goal.trim()) return failure(serviceError("BAD_GOAL", "Goal is required."));
     const current = await context(directory, expectedRoot, expectedPlanning);
     if ("code" in current) return failure(current);
-    const pinned = await context((0, import_node_path.dirname)(current.planningRoot));
+    const pinned = await context((0, import_node_path2.dirname)(current.planningRoot));
     if ("code" in pinned) return failure(pinned);
     if (pinned.planning !== current.planning)
       return failure(serviceError("ROOT_CHANGED", "Canonical planning context changed.", 409));
     const confirmed = await context(directory, current.root, current.planning);
     if ("code" in confirmed) return failure(confirmed);
-    const parent = (0, import_node_path.join)(current.planningRoot, "changes");
+    const parent = (0, import_node_path2.join)(current.planningRoot, "changes");
     const parentStat = await (0, import_promises.lstat)(parent);
     if (parentStat.isSymbolicLink() || !parentStat.isDirectory())
       return failure(
@@ -7999,8 +8008,8 @@ function createOpenSpecAdapter(run = runOpenSpec, remove = import_promises.rm) {
       return failure(serviceError("CHANGE_UNAVAILABLE", "Change is no longer listed.", 404));
     const status = await checked(directory, ["status", "--change", change], current);
     if (!status.ok) return status;
-    const parent = (0, import_node_path.join)(current.planningRoot, "changes");
-    const target = (0, import_node_path.join)(parent, change);
+    const parent = (0, import_node_path2.join)(current.planningRoot, "changes");
+    const target = (0, import_node_path2.join)(parent, change);
     try {
       await validatedChange(current, change, status.value);
       const identities = await Promise.all(

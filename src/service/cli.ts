@@ -1,4 +1,6 @@
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
+import { delimiter, join } from "node:path";
 
 const COMMAND_TIMEOUT_MS = 15_000;
 const STDOUT_BYTES = 1024 * 1024;
@@ -61,10 +63,25 @@ export async function runOpenSpec(
   if (remainingMs <= 0)
     return { ok: false, error: serviceError("CLI_TIMEOUT", "OpenSpec request timed out.", 504) };
   return await new Promise((complete) => {
-    const child = spawn(options.binary ?? "openspec", [...args, "--json"], {
-      cwd: directory,
-      stdio: ["ignore", "pipe", "pipe"],
-    });
+    // Windows npm exposes a .cmd shim, which spawn cannot execute without a shell.
+    // Invoke the installed JavaScript entry directly and preserve argument boundaries.
+    const windowsEntry =
+      process.platform === "win32" && !options.binary
+        ? (process.env.PATH ?? "")
+            .split(delimiter)
+            .map((directory) =>
+              join(directory, "node_modules", "@fission-ai", "openspec", "bin", "openspec.js"),
+            )
+            .find((entry) => existsSync(entry))
+        : undefined;
+    const child = spawn(
+      windowsEntry ? "node" : (options.binary ?? "openspec"),
+      [...(windowsEntry ? [windowsEntry] : []), ...args, "--json"],
+      {
+        cwd: directory,
+        stdio: ["ignore", "pipe", "pipe"],
+      },
+    );
     const stdout: Buffer[] = [];
     const stderr: Buffer[] = [];
     let stdoutSize = 0;
