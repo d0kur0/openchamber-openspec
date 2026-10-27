@@ -54,7 +54,7 @@ export function mountBoardView(
   headingActions.className = "heading-actions";
   const newChangeRoot = document.createElement("span");
   const newChange = mountButton(newChangeRoot, {
-    label: "new change",
+    label: "Добавить",
     variant: "default",
     size: "sm",
     disabled: true,
@@ -63,7 +63,7 @@ export function mountBoardView(
   addButtonIcon(newChangeRoot, "create");
   const archiveRoot = document.createElement("span");
   const archive = mountButton(archiveRoot, {
-    label: "archive all",
+    label: "Архивировать завершённые",
     variant: "secondary",
     size: "sm",
     disabled: true,
@@ -79,7 +79,7 @@ export function mountBoardView(
   const refreshRoot = document.createElement("span");
   refreshRoot.className = "refresh-control";
   const refresh = mountButton(refreshRoot, {
-    label: "refresh",
+    label: "Обновить",
     variant: "ghost",
     size: "sm",
     onClick: callbacks.retry,
@@ -93,8 +93,8 @@ export function mountBoardView(
   let searchValue = "";
   const search = mountSearchField(searchRoot, {
     value: "",
-    placeholder: "Search changes",
-    label: "Search changes",
+    placeholder: "Найти задачу",
+    label: "Найти задачу",
     onChange: (value) => {
       searchValue = value;
       callbacks.search(value);
@@ -168,14 +168,14 @@ export function mountBoardView(
       const action = mountPrimaryAction(actionRoot);
       const exploreRoot = document.createElement("span");
       const explore = mountButton(exploreRoot, {
-        label: "explore",
+        label: "Разобрать",
         variant: "secondary",
         size: "sm",
         onClick: () => cards.get(id)?.current.action("explore"),
       });
       const verifyRoot = document.createElement("span");
       const verify = mountButton(verifyRoot, {
-        label: "verify",
+        label: "Проверить",
         variant: "secondary",
         size: "sm",
         onClick: () => cards.get(id)?.current.action("verify"),
@@ -206,14 +206,16 @@ export function mountBoardView(
     }
     entry.current = item;
     const change = item.change;
-    if (entry.title.textContent !== change.id) entry.title.textContent = change.id;
+    const displayTitle = change.goal?.trim() || change.id;
+    if (entry.title.textContent !== displayTitle) entry.title.textContent = displayTitle;
+    entry.title.title = change.id;
     entry.areas.update(change.affectedAreas);
-    const label = `${change.completedArtifacts} of ${change.totalArtifacts} artefacts${change.totalTasks === 0 ? " · No tasks yet" : ""}`;
+    const label = `Документы: ${change.completedArtifacts}/${change.totalArtifacts}${change.totalTasks === 0 ? " · задач пока нет" : ""}`;
     if (entry.progressLabel.textContent !== label) entry.progressLabel.textContent = label;
     entry.progressRoot.hidden = !change.totalTasks;
     entry.progress.update({
       value: change.totalTasks ? Math.round((100 * change.completedTasks) / change.totalTasks) : 0,
-      label: `${change.completedTasks} of ${change.totalTasks} tasks complete`,
+      label: `Выполнено задач: ${change.completedTasks}/${change.totalTasks}`,
     });
     entry.action.update({
       id: change.id,
@@ -245,7 +247,7 @@ export function mountBoardView(
         searchValue = state.search;
         search.update({ value: searchValue });
       }
-      tally.textContent = `${state.listedCount} changes · ${state.completedTasks} of ${state.totalTasks} tasks complete`;
+      tally.textContent = `Изменений: ${state.listedCount} · выполнено задач: ${state.completedTasks}/${state.totalTasks}`;
       refresh.update({ disabled: !state.directory, loading: state.loading });
       const nextNoticeSignature = JSON.stringify([
         !!state.directory,
@@ -318,10 +320,10 @@ export function mountBoardView(
         }
         empty.textContent =
           state.loading && !state.settled && state.pendingSummaries
-            ? "Loading…"
+            ? "Загрузка…"
             : query
-              ? "No matching changes"
-              : "No changes here";
+              ? "Ничего не найдено"
+              : "Пока пусто";
         if (!matching.length) {
           if (empty.parentElement !== grid) grid.append(empty);
         } else empty.remove();

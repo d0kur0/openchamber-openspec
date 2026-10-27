@@ -2200,12 +2200,12 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
 
   // src/panel/workflow.ts
   var stages = [
-    { id: "planning", label: "Planning", action: "propose" },
-    { id: "ready", label: "Ready", action: "apply" },
-    { id: "progress", label: "In Progress", action: "continue" },
-    { id: "complete", label: "Complete", action: "archive" }
+    { id: "planning", label: "\u041F\u0440\u043E\u0440\u0430\u0431\u043E\u0442\u043A\u0430", action: "propose" },
+    { id: "ready", label: "\u041A \u0440\u0435\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u0438", action: "apply" },
+    { id: "progress", label: "\u0412 \u0440\u0430\u0431\u043E\u0442\u0435", action: "continue" },
+    { id: "complete", label: "\u0417\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u043E", action: "archive" }
   ];
-  var workflowLabel = (stage) => stages.find((item) => item.id === stage).action;
+  var workflowLabel = (stage) => ({ planning: "\u041F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u0438\u0442\u044C", ready: "\u0420\u0435\u0430\u043B\u0438\u0437\u043E\u0432\u0430\u0442\u044C", progress: "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C", complete: "\u0412 \u0430\u0440\u0445\u0438\u0432" })[stage];
   var stageLabel = (stage) => stages.find((item) => item.id === stage).label;
 
   // src/panel/primary-action.ts
@@ -2216,12 +2216,12 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     let state = null;
     let opened = null;
     const button2 = mountButton(buttonRoot, {
-      label: "propose",
+      label: "\u041F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u0438\u0442\u044C",
       size: "sm",
       onClick: () => state?.action("primary")
     });
     const menu = mountMenu(menuRoot, {
-      label: "apply",
+      label: "\u0420\u0435\u0430\u043B\u0438\u0437\u043E\u0432\u0430\u0442\u044C",
       size: "sm",
       variant: "default",
       items: [],
@@ -2247,8 +2247,12 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
         button2.update({ label: workflowLabel(next.stage), disabled: next.disabled });
         menu.update({
           items: [
-            { id: "current", label: "Prepare in current chat", disabled: next.disabled },
-            { id: "worktree", label: "Run in new worktree", disabled: next.disabled || next.pending }
+            { id: "current", label: "\u041F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u0438\u0442\u044C \u0432 \u0442\u0435\u043A\u0443\u0449\u0435\u043C \u0447\u0430\u0442\u0435", disabled: next.disabled },
+            {
+              id: "worktree",
+              label: "\u0417\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C \u0432 \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u043E\u0439 \u0440\u0430\u0431\u043E\u0447\u0435\u0439 \u043A\u043E\u043F\u0438\u0438",
+              disabled: next.disabled || next.pending
+            }
           ]
         });
         trigger.disabled = next.disabled;
@@ -2371,7 +2375,7 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     headingActions.className = "heading-actions";
     const newChangeRoot = document.createElement("span");
     const newChange = mountButton(newChangeRoot, {
-      label: "new change",
+      label: "\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C",
       variant: "default",
       size: "sm",
       disabled: true,
@@ -2380,7 +2384,7 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     addButtonIcon(newChangeRoot, "create");
     const archiveRoot = document.createElement("span");
     const archive = mountButton(archiveRoot, {
-      label: "archive all",
+      label: "\u0410\u0440\u0445\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D\u043D\u044B\u0435",
       variant: "secondary",
       size: "sm",
       disabled: true,
@@ -2396,7 +2400,7 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     const refreshRoot = document.createElement("span");
     refreshRoot.className = "refresh-control";
     const refresh = mountButton(refreshRoot, {
-      label: "refresh",
+      label: "\u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C",
       variant: "ghost",
       size: "sm",
       onClick: callbacks.retry
@@ -2410,8 +2414,8 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     let searchValue = "";
     const search = mountSearchField(searchRoot, {
       value: "",
-      placeholder: "Search changes",
-      label: "Search changes",
+      placeholder: "\u041D\u0430\u0439\u0442\u0438 \u0437\u0430\u0434\u0430\u0447\u0443",
+      label: "\u041D\u0430\u0439\u0442\u0438 \u0437\u0430\u0434\u0430\u0447\u0443",
       onChange: (value) => {
         searchValue = value;
         callbacks.search(value);
@@ -2468,14 +2472,14 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
         const action = mountPrimaryAction(actionRoot);
         const exploreRoot = document.createElement("span");
         const explore = mountButton(exploreRoot, {
-          label: "explore",
+          label: "\u0420\u0430\u0437\u043E\u0431\u0440\u0430\u0442\u044C",
           variant: "secondary",
           size: "sm",
           onClick: () => cards.get(id)?.current.action("explore")
         });
         const verifyRoot = document.createElement("span");
         const verify = mountButton(verifyRoot, {
-          label: "verify",
+          label: "\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C",
           variant: "secondary",
           size: "sm",
           onClick: () => cards.get(id)?.current.action("verify")
@@ -2506,14 +2510,16 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
       }
       entry.current = item;
       const change = item.change;
-      if (entry.title.textContent !== change.id) entry.title.textContent = change.id;
+      const displayTitle = change.goal?.trim() || change.id;
+      if (entry.title.textContent !== displayTitle) entry.title.textContent = displayTitle;
+      entry.title.title = change.id;
       entry.areas.update(change.affectedAreas);
-      const label = `${change.completedArtifacts} of ${change.totalArtifacts} artefacts${change.totalTasks === 0 ? " \xB7 No tasks yet" : ""}`;
+      const label = `\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B: ${change.completedArtifacts}/${change.totalArtifacts}${change.totalTasks === 0 ? " \xB7 \u0437\u0430\u0434\u0430\u0447 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442" : ""}`;
       if (entry.progressLabel.textContent !== label) entry.progressLabel.textContent = label;
       entry.progressRoot.hidden = !change.totalTasks;
       entry.progress.update({
         value: change.totalTasks ? Math.round(100 * change.completedTasks / change.totalTasks) : 0,
-        label: `${change.completedTasks} of ${change.totalTasks} tasks complete`
+        label: `\u0412\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u043E \u0437\u0430\u0434\u0430\u0447: ${change.completedTasks}/${change.totalTasks}`
       });
       entry.action.update({
         id: change.id,
@@ -2544,7 +2550,7 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
           searchValue = state.search;
           search.update({ value: searchValue });
         }
-        tally.textContent = `${state.listedCount} changes \xB7 ${state.completedTasks} of ${state.totalTasks} tasks complete`;
+        tally.textContent = `\u0418\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0439: ${state.listedCount} \xB7 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u043E \u0437\u0430\u0434\u0430\u0447: ${state.completedTasks}/${state.totalTasks}`;
         refresh.update({ disabled: !state.directory, loading: state.loading });
         const nextNoticeSignature = JSON.stringify([
           !!state.directory,
@@ -2607,7 +2613,7 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
             if (child !== empty && !matching.some((item) => cards.get(item.change.id)?.node === child))
               child.remove();
           }
-          empty.textContent = state.loading && !state.settled && state.pendingSummaries ? "Loading\u2026" : query ? "No matching changes" : "No changes here";
+          empty.textContent = state.loading && !state.settled && state.pendingSummaries ? "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430\u2026" : query ? "\u041D\u0438\u0447\u0435\u0433\u043E \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E" : "\u041F\u043E\u043A\u0430 \u043F\u0443\u0441\u0442\u043E";
           if (!matching.length) {
             if (empty.parentElement !== grid) grid.append(empty);
           } else empty.remove();
