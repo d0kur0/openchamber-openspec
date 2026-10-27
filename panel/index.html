@@ -1104,29 +1104,98 @@
           white-space: normal;
         }
       }
-      .studio-settings {
-        padding: 8px 12px;
-        border-bottom: 1px solid var(--oc-border);
-        font-size: 12px;
+      .studio-footer {
+        flex: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 12px;
+        border-top: 1px solid var(--oc-border);
       }
-      .studio-settings summary {
-        cursor: pointer;
+      .studio-project {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 11px;
+        opacity: 0.75;
       }
-      .studio-settings input {
-        width: min(100%, 360px);
-        margin: 8px 8px 8px 0;
-        padding: 8px;
+      .settings-trigger {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        border: 1px solid transparent;
+        border-radius: 6px;
         background: transparent;
         color: inherit;
-        border: 1px solid currentColor;
+        cursor: pointer;
+      }
+      .settings-trigger:hover {
+        background: var(--oc-hover);
+      }
+      .settings-trigger:focus-visible {
+        outline: 2px solid var(--oc-focus);
+      }
+      dialog.studio-settings {
+        width: min(440px, calc(100vw - 32px));
+        max-height: calc(100dvh - 32px);
+        overflow: auto;
+        padding: 24px;
+        color: var(--oc-fg);
+        background: var(--oc-bg);
+        border: 1px solid var(--oc-border);
+        border-radius: 12px;
+      }
+      .studio-settings h2 {
+        margin: 0 0 20px;
+      }
+      .studio-settings label {
+        display: grid;
+        gap: 8px;
+        margin: 20px 0 12px;
+      }
+      .studio-settings input {
+        width: 100%;
+        min-width: 0;
+        padding: 9px 10px;
+        background: transparent;
+        color: inherit;
+        border: 1px solid var(--oc-border);
         border-radius: 6px;
       }
-      .studio-settings button {
-        padding: 7px 10px;
-        cursor: pointer;
+      .studio-settings input:focus-visible {
+        outline: 2px solid var(--oc-focus);
+      }
+      .settings-project-path {
+        display: block;
+        overflow-wrap: anywhere;
+        font-size: 12px;
+      }
+      .settings-hint {
+        font-size: 12px;
+        line-height: 1.5;
+        opacity: 0.75;
       }
       .studio-settings [role="status"] {
         display: block;
+        color: var(--oc-error-text);
+        font-size: 12px;
+        margin-bottom: 12px;
+      }
+      .studio-settings .create-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+      .studio-settings button {
+        padding: 8px 12px;
+        color: inherit;
+        background: transparent;
+        border: 1px solid var(--oc-border);
+        border-radius: 6px;
+        cursor: pointer;
       }
       .jira-links {
         display: flex;

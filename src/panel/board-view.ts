@@ -361,7 +361,7 @@ export function mountBoardView(
     update(state: BoardState) {
       latest = state;
       project.textContent =
-        state.directory?.split("/").filter(Boolean).at(-1) ?? t("No project selected");
+        state.directory?.split(/[\\/]/).filter(Boolean).at(-1) ?? t("No project selected");
       newChange.update({ disabled: !state.canCreate });
       archive.update({ disabled: !state.canArchive, loading: state.archivePending });
       if (searchValue !== state.search) {

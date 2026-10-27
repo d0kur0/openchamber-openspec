@@ -1965,9 +1965,9 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
       if (!isChangeName(id) || "summary" in item === "error" in item)
         throw new Error("Invalid summary entry.");
       if ("summary" in item) {
-        const summary2 = decodeSummary(item.summary);
-        if (summary2.id !== id || summary2.root !== root2) throw new Error("Invalid summary scope.");
-        return { id, summary: summary2 };
+        const summary = decodeSummary(item.summary);
+        if (summary.id !== id || summary.root !== root2) throw new Error("Invalid summary scope.");
+        return { id, summary };
       }
       const error = record(item.error);
       return { id, error: { code: string(error.code), message: string(error.message) } };
@@ -2911,7 +2911,7 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
       },
       update(state) {
         latest = state;
-        project.textContent = state.directory?.split("/").filter(Boolean).at(-1) ?? t("No project selected");
+        project.textContent = state.directory?.split(/[\\/]/).filter(Boolean).at(-1) ?? t("No project selected");
         newChange.update({ disabled: !state.canCreate });
         archive.update({ disabled: !state.canArchive, loading: state.archivePending });
         if (searchValue !== state.search) {
@@ -6549,8 +6549,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
   // src/panel/tasks-view.ts
   function mountTasksView(root2, retryRead) {
     root2.className = "tasks-view";
-    const summary2 = document.createElement("p");
-    summary2.className = "content-status";
+    const summary = document.createElement("p");
+    summary.className = "content-status";
     const progressRoot = document.createElement("div");
     const progress = mountProgress(progressRoot, { value: 0, label: t("Task completion") });
     const issue = document.createElement("p");
@@ -6564,7 +6564,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     });
     const list = document.createElement("ol");
     list.className = "task-rows";
-    root2.append(summary2, progressRoot, issue, retryRoot, list);
+    root2.append(summary, progressRoot, issue, retryRoot, list);
     const rows = /* @__PURE__ */ new Map();
     function clear() {
       rows.clear();
@@ -6574,8 +6574,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       update(state, retryable = true, emptyMessage = "") {
         const tasks = state?.value ?? [];
         const completed = tasks.filter((task) => task.done).length;
-        summary2.textContent = tasks.length || state?.error || !retryable ? "" : state?.pending ? "Loading tasks\u2026" : emptyMessage || t("No tasks tracked yet.");
-        summary2.hidden = !summary2.textContent;
+        summary.textContent = tasks.length || state?.error || !retryable ? "" : state?.pending ? "Loading tasks\u2026" : emptyMessage || t("No tasks tracked yet.");
+        summary.hidden = !summary.textContent;
         progressRoot.hidden = !tasks.length;
         progress.update({
           value: tasks.length ? Math.round(completed / tasks.length * 100) : 0,
@@ -6771,8 +6771,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     const tasks = document.createElement("section");
     const tasksView = mountTasksView(tasks, callbacks.retryTasks);
     content.append(readinessNote, documents, tasks);
-    const footer = document.createElement("footer");
-    footer.className = "detail-footer";
+    const footer2 = document.createElement("footer");
+    footer2.className = "detail-footer";
     const actionRoot = document.createElement("span");
     const action = mountPrimaryAction(actionRoot);
     const verifyRoot = document.createElement("span");
@@ -6789,9 +6789,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       size: "sm",
       onClick: () => callbacks.action("explore")
     });
-    footer.append(exploreRoot, verifyRoot, actionRoot);
+    footer2.append(exploreRoot, verifyRoot, actionRoot);
     body2.append(toolbar, unavailable, refreshIssue, content);
-    shell.append(header, body2, footer);
+    shell.append(header, body2, footer2);
     root2.append(shell);
     let currentOwner = null;
     let tabSignature = "";
@@ -6826,15 +6826,15 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       let entry = files.get(key);
       if (!entry) {
         const node = document.createElement("details");
-        const summary2 = document.createElement("summary");
+        const summary = document.createElement("summary");
         const path2 = document.createElement("span");
         path2.textContent = descriptor.label;
         const status2 = document.createElement("span");
         status2.className = "document-status";
-        summary2.append(path2, status2);
+        summary.append(path2, status2);
         const body3 = document.createElement("div");
         const view = mountDocumentView(body3, { openUrl: callbacks.openUrl });
-        node.append(summary2, body3);
+        node.append(summary, body3);
         node.addEventListener("toggle", () => {
           if (node.open) {
             for (const other of files.values()) if (other.node !== node) other.node.open = false;
@@ -7649,8 +7649,8 @@ Report archived, skipped and blocked changes with reasons. If none qualify, make
         if (reconcile) reconcileQueued = true;
         return;
       }
-      const currentDirectory = directory;
-      if (!currentDirectory) {
+      const currentDirectory2 = directory;
+      if (!currentDirectory2) {
         invalidate();
         return;
       }
@@ -7669,15 +7669,15 @@ Report archived, skipped and blocked changes with reasons. If none qualify, make
       render();
       void (async () => {
         try {
-          const listing = await client.list(currentDirectory);
-          if (directory !== currentDirectory || epoch !== startingEpoch || operation !== boardOperation)
+          const listing = await client.list(currentDirectory2);
+          if (directory !== currentDirectory2 || epoch !== startingEpoch || operation !== boardOperation)
             return;
           if (scope && scope.root !== listing.root) {
             invalidate();
             loadBoard();
             return;
           }
-          scope = scope?.root === listing.root && scope.planning === listing.planning ? scope : { directory: currentDirectory, root: listing.root, planning: listing.planning };
+          scope = scope?.root === listing.root && scope.planning === listing.planning ? scope : { directory: currentDirectory2, root: listing.root, planning: listing.planning };
           const current = scope;
           resources.setContext(current);
           const listed = new Set(listing.changes.map((entry) => entry.id));
@@ -7708,10 +7708,10 @@ Report archived, skipped and blocked changes with reasons. If none qualify, make
           for (const entry of summaries) {
             try {
               if ("error" in entry) throw entry.error;
-              const summary2 = entry.summary;
+              const summary = entry.summary;
               if (epoch !== startingEpoch || scope !== current || operation !== boardOperation)
                 return;
-              const derived = deriveChange(summary2);
+              const derived = deriveChange(summary);
               changes = [...changes.filter((item) => item.id !== derived.id), derived].sort(
                 (a, b) => a.id.localeCompare(b.id)
               );
@@ -7768,7 +7768,7 @@ Report archived, skipped and blocked changes with reasons. If none qualify, make
           pendingSummaries = 0;
           render();
         } catch (caught) {
-          if (directory !== currentDirectory || epoch !== startingEpoch || operation !== boardOperation)
+          if (directory !== currentDirectory2 || epoch !== startingEpoch || operation !== boardOperation)
             return;
           if (caught instanceof ServiceRequestError && caught.code === "PLANNING_CHANGED") {
             planningChanged();
@@ -7783,7 +7783,7 @@ Report archived, skipped and blocked changes with reasons. If none qualify, make
           staleIds = new Set(changes.map((change) => change.id));
           errorMessage = caught instanceof Error ? caught.message : "The board could not be loaded.";
         } finally {
-          if (epoch === startingEpoch && directory === currentDirectory && operation === boardOperation) {
+          if (epoch === startingEpoch && directory === currentDirectory2 && operation === boardOperation) {
             loading = false;
             boardActive = false;
             render();
@@ -8334,20 +8334,71 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
   var body = document.createElement("div");
   body.className = "studio-body";
   bar.append(brand, status, language);
-  var settings = document.createElement("details");
+  var footer = document.createElement("footer");
+  footer.className = "studio-footer";
+  var projectContext = document.createElement("span");
+  projectContext.className = "studio-project";
+  var settingsButton = document.createElement("button");
+  settingsButton.type = "button";
+  settingsButton.className = "settings-trigger";
+  settingsButton.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7"><path d="m9 3-.7 2.4-2 .9L4 5.7 2.5 8.3l1.7 1.8-.2 2.2L2.5 14 4 16.6l2.3-.5 1.8 1.2L9 20h3l.8-2.7 1.9-1.2 2.3.5 1.5-2.6-1.7-1.7.1-2.2 1.6-1.8L17 5.7l-2.3.6-2-.9L12 3Z"/><circle cx="10.5" cy="11.5" r="3"/></svg>';
+  footer.append(projectContext, settingsButton);
+  var settings = document.createElement("dialog");
   settings.className = "studio-settings";
-  var summary = document.createElement("summary");
+  var settingsTitle = document.createElement("h2");
+  settingsTitle.id = "studio-settings-title";
+  settings.setAttribute("aria-labelledby", settingsTitle.id);
+  var projectLabel = document.createElement("p");
+  var projectPath = document.createElement("code");
+  projectPath.className = "settings-project-path";
+  var projectHint = document.createElement("p");
+  projectHint.className = "settings-hint";
   var jiraLabel = document.createElement("label");
+  var jiraCaption = document.createElement("span");
   var jiraInput = document.createElement("input");
   jiraInput.type = "url";
   jiraInput.placeholder = "https://jira.example.com";
   var jiraSave = document.createElement("button");
   jiraSave.type = "button";
+  var closeSettings = document.createElement("button");
+  closeSettings.type = "button";
   var jiraStatus = document.createElement("span");
   jiraStatus.setAttribute("role", "status");
-  jiraLabel.append(jiraInput);
-  settings.append(summary, jiraLabel, jiraSave, jiraStatus);
-  root.append(bar, settings, body);
+  var settingsActions = document.createElement("div");
+  settingsActions.className = "create-actions";
+  settingsActions.append(closeSettings, jiraSave);
+  jiraLabel.append(jiraCaption, jiraInput);
+  settings.append(
+    settingsTitle,
+    projectLabel,
+    projectPath,
+    projectHint,
+    jiraLabel,
+    jiraStatus,
+    settingsActions
+  );
+  root.append(bar, body, footer, settings);
+  var currentDirectory = null;
+  function contextLabels() {
+    const name = currentDirectory?.split(/[\\/]/).filter(Boolean).at(-1);
+    projectContext.textContent = preferences.locale === "ru" ? `\u041F\u0440\u043E\u0435\u043A\u0442: ${name ?? "\u043D\u0435 \u0432\u044B\u0431\u0440\u0430\u043D"}` : `Project: ${name ?? "not selected"}`;
+    projectContext.title = currentDirectory ?? "";
+    projectPath.textContent = currentDirectory ?? (preferences.locale === "ru" ? "\u041F\u0440\u043E\u0435\u043A\u0442 \u043D\u0435 \u0432\u044B\u0431\u0440\u0430\u043D" : "No project selected");
+  }
+  settingsButton.onclick = () => {
+    jiraInput.value = preferences.jiraBase;
+    jiraStatus.textContent = "";
+    settings.showModal();
+    jiraInput.focus();
+  };
+  closeSettings.onclick = () => settings.close();
+  settings.addEventListener("click", (event) => {
+    if (event.target === settings) {
+      const rect = settings.getBoundingClientRect();
+      if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)
+        settings.close();
+    }
+  });
   jiraSave.onclick = () => {
     const base = normalizeJiraBase(jiraInput.value);
     if (base === null) {
@@ -8357,14 +8408,21 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
     preferences.jiraBase = base;
     remount();
     savePreferences();
-    jiraStatus.textContent = preferences.locale === "ru" ? "\u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u043E" : "Saved";
+    settings.close();
   };
   var unmount = mountController(host, body);
   var disposed = false;
   var loaded = false;
   var touched = false;
   function labels() {
-    summary.textContent = preferences.locale === "ru" ? "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438 \u0441\u0441\u044B\u043B\u043E\u043A" : "Link settings";
+    settingsTitle.textContent = preferences.locale === "ru" ? "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438" : "Settings";
+    settingsButton.setAttribute("aria-label", settingsTitle.textContent);
+    settingsButton.title = settingsTitle.textContent;
+    jiraCaption.textContent = preferences.locale === "ru" ? "\u0410\u0434\u0440\u0435\u0441 Jira" : "Jira base URL";
+    projectLabel.textContent = preferences.locale === "ru" ? "\u0422\u0435\u043A\u0443\u0449\u0438\u0439 \u043F\u0440\u043E\u0435\u043A\u0442 OpenChamber" : "Current OpenChamber project";
+    projectHint.textContent = preferences.locale === "ru" ? "\u0414\u043E\u0441\u043A\u0430 \u0441\u043B\u0435\u0434\u0443\u0435\u0442 \u0437\u0430 \u043F\u0440\u043E\u0435\u043A\u0442\u043E\u043C \u0442\u0435\u043A\u0443\u0449\u0435\u0433\u043E \u0447\u0430\u0442\u0430. \u0414\u043B\u044F \u0441\u043C\u0435\u043D\u044B \u043E\u0442\u043A\u0440\u043E\u0439\u0442\u0435 \u0434\u0440\u0443\u0433\u043E\u0439 \u043F\u0440\u043E\u0435\u043A\u0442 \u0438\u043B\u0438 \u0447\u0430\u0442 \u0432 OpenChamber. \u041F\u043E\u043A\u0430\u0437\u044B\u0432\u0430\u0435\u043C \u0435\u0433\u043E \u043A\u0430\u0442\u0430\u043B\u043E\u0433 openspec; \u0432 \u043F\u0440\u043E\u0435\u043A\u0442\u0435 \u0431\u0435\u0437 OpenSpec \u0434\u043E\u0441\u043A\u0430 \u0431\u0443\u0434\u0435\u0442 \u043F\u0443\u0441\u0442\u043E\u0439." : "The board follows the current chat\u2019s project. Open another project or chat in OpenChamber to switch. It reads that project\u2019s openspec folder; projects without OpenSpec have an empty board.";
+    closeSettings.textContent = preferences.locale === "ru" ? "\u041E\u0442\u043C\u0435\u043D\u0430" : "Cancel";
+    contextLabels();
     jiraInput.setAttribute(
       "aria-label",
       preferences.locale === "ru" ? "\u0410\u0434\u0440\u0435\u0441 Jira" : "Jira base URL"
@@ -8401,6 +8459,8 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
   };
   labels();
   var offTheme = host.onReady((ready2) => {
+    currentDirectory = ready2.directory;
+    contextLabels();
     applyHostReady(ready2, document.documentElement);
     document.documentElement.classList.add("oc-themed");
     root.style.visibility = "visible";
@@ -8414,11 +8474,16 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
       });
     }
   });
+  var offProject = host.onDirectory((directory) => {
+    currentDirectory = directory;
+    contextLabels();
+  });
   window.addEventListener(
     "pagehide",
     () => {
       disposed = true;
       offTheme();
+      offProject();
       unmount();
       host.dispose();
     },

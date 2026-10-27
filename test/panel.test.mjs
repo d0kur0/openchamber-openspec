@@ -4872,3 +4872,42 @@ test("Back restores the board scroll and theme updates preserve detail navigatio
     await page.close();
   });
 });
+
+test("Studio settings modal follows host project and leaves the board chrome uncluttered", async () => {
+  await withPanel(async (browser, url) => {
+    const page = await browser.newPage({ viewport: { width: 900, height: 800 } });
+    await page.goto(url);
+    const panel = page.frameLocator("iframe");
+    await panel.getByRole("button", { name: "Настройки", exact: true }).waitFor();
+    assert.equal(await panel.locator(".studio-footer").innerText(), "Проект: fixture-project");
+    assert.equal(await panel.getByRole("dialog").count(), 0);
+    await panel.getByRole("button", { name: "Настройки", exact: true }).click();
+    await panel.getByRole("dialog", { name: "Настройки", exact: true }).waitFor();
+    assert.equal(
+      await panel.locator(".settings-project-path").textContent(),
+      "/tmp/fixture-project",
+    );
+    await panel
+      .getByRole("textbox", { name: "Адрес Jira", exact: true })
+      .fill("javascript:alert(1)");
+    await panel.getByRole("button", { name: "Сохранить", exact: true }).click();
+    assert.ok(
+      await panel
+        .getByText("Укажите HTTP(S)-адрес без пароля, параметров и якоря", { exact: true })
+        .isVisible(),
+    );
+    await panel.getByRole("textbox", { name: "Адрес Jira", exact: true }).press("Escape");
+    assert.equal(await panel.getByRole("dialog").count(), 0);
+    await page.evaluate(() => __directory("C:\\work\\another-project"));
+    await panel.getByText("Проект: another-project", { exact: true }).waitFor();
+    await panel.getByRole("button", { name: "Настройки", exact: true }).click();
+    assert.equal(
+      await panel.locator(".settings-project-path").textContent(),
+      "C:\\work\\another-project",
+    );
+    await panel.getByRole("button", { name: "Отмена", exact: true }).click();
+    await page.evaluate(() => __directory(null));
+    await panel.getByText("Проект: не выбран", { exact: true }).waitFor();
+    await page.close();
+  });
+});
