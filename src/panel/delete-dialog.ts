@@ -1,3 +1,4 @@
+import { t, bi } from "./i18n.js";
 import { mountButton } from "@openchamber/sdk/ui";
 import { ServiceRequestError, type Client, type Scope } from "./client.js";
 import { addButtonIcon } from "./button-icon.js";
@@ -51,7 +52,7 @@ export function mountDeleteDialog(
     message.textContent = "";
   }
   const cancel = mountButton(cancelRoot, {
-    label: "cancel",
+    label: t("cancel"),
     variant: "secondary",
     size: "sm",
     onClick: () => {
@@ -59,7 +60,7 @@ export function mountDeleteDialog(
     },
   });
   const retry = mountButton(retryRoot, {
-    label: "Retry read",
+    label: t("Retry read"),
     variant: "secondary",
     size: "sm",
     onClick: () => {
@@ -67,7 +68,7 @@ export function mountDeleteDialog(
     },
   });
   const confirm = mountButton(deleteRoot, {
-    label: "delete",
+    label: t("delete"),
     variant: "destructive",
     size: "sm",
     onClick: () => {
@@ -126,8 +127,9 @@ export function mountDeleteDialog(
       if (disposed || !matches(attempt) || target !== attempt) return;
       unresolved.add(key(attempt));
       mode = "unresolved";
-      message.textContent =
-        "Deletion outcome is unresolved. Retry the read of the original project before another attempt.";
+      message.textContent = t(
+        "Deletion outcome is unresolved. Retry the read of the original project before another attempt.",
+      );
       display();
     }
   }
@@ -163,11 +165,16 @@ export function mountDeleteDialog(
       if (dialog.open || disposed || !matches(attempt)) return;
       target = attempt;
       mode = unresolved.has(key(attempt)) ? "unresolved" : "confirming";
-      heading.textContent = `Delete ${attempt.name}?`;
-      description.textContent = `Permanently remove the planning folder for ${attempt.name}? This does not undo implementation or delete main specifications.`;
+      heading.textContent = bi(`Удалить ${attempt.name}?`, `Delete ${attempt.name}?`);
+      description.textContent = bi(
+        `Удалить папку планирования ${attempt.name} без возможности восстановления? Реализация и основные спецификации останутся.`,
+        `Permanently remove the planning folder for ${attempt.name}? This does not undo implementation or delete main specifications.`,
+      );
       message.textContent =
         mode === "unresolved"
-          ? "Deletion outcome is unresolved. Retry the read of the original project before another attempt."
+          ? t(
+              "Deletion outcome is unresolved. Retry the read of the original project before another attempt.",
+            )
           : "";
       display();
       dialog.showModal();

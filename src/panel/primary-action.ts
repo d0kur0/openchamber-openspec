@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { mountButton, mountMenu } from "@openchamber/sdk/ui";
 import type { Stage } from "../model.js";
 import { workflowLabel } from "./workflow.js";
@@ -18,12 +19,12 @@ export function mountPrimaryAction(root: HTMLElement) {
   let state: State | null = null;
   let opened: State | null = null;
   const button = mountButton(buttonRoot, {
-    label: "Подготовить",
+    label: t("propose"),
     size: "sm",
     onClick: () => state?.action("primary"),
   });
   const menu = mountMenu(menuRoot, {
-    label: "Реализовать",
+    label: t("apply"),
     size: "sm",
     variant: "default",
     items: [],
@@ -56,10 +57,10 @@ export function mountPrimaryAction(root: HTMLElement) {
       button.update({ label: workflowLabel(next.stage), disabled: next.disabled });
       menu.update({
         items: [
-          { id: "current", label: "Подготовить в текущем чате", disabled: next.disabled },
+          { id: "current", label: t("Prepare in current chat"), disabled: next.disabled },
           {
             id: "worktree",
-            label: "Запустить в отдельной рабочей копии",
+            label: t("Run in new worktree"),
             disabled: next.disabled || next.pending,
           },
         ],

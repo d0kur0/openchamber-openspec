@@ -1,6 +1,6 @@
 {
-  "name": "openchamber-openspec",
-  "version": "1.2.1",
+  "name": "openchamber-openspec-studio",
+  "version": "1.3.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,15 +15,16 @@
     "format:check": "prettier --check src test panel/index.html service/package.json package.json tsconfig.json eslint.config.mjs README.md .prettierrc .vscode/tasks.json",
     "format": "prettier --write src test panel/index.html service/package.json package.json tsconfig.json eslint.config.mjs README.md .prettierrc .vscode/tasks.json",
     "typecheck": "tsc --noEmit",
-    "test": "npm run build:panel && npm run build:service && npm run build:model:test && npm run build:resources:test && node --test test/*.test.mjs",
-    "clean": "node -e \"for (const file of ['panel/main.js', 'service/main.js']) require('node:fs').rmSync(file, { force: true })\""
+    "test": "npm run build:panel && npm run build:service && npm run build:model:test && npm run build:resources:test && npm run build:studio:test && node --test test/*.test.mjs",
+    "clean": "node -e \"for (const file of ['panel/main.js', 'service/main.js']) require('node:fs').rmSync(file, { force: true })\"",
+    "build:studio:test": "esbuild src/studio-model.ts --bundle --format=esm --platform=node --target=node22 --outfile=build/studio-model.mjs"
   },
   "openchamber": {
     "apiVersion": 1,
     "contributes": {
       "panel": {
         "id": "openspec-board",
-        "name": "OpenSpec",
+        "name": "OpenSpec Studio",
         "icon": "assets/openspec-logo.svg",
         "entry": "panel/index.html"
       },
@@ -58,5 +59,10 @@
     "prettier": "^3.9.9",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.70.1"
+  },
+  "description": "Russian-first OpenSpec board and list for OpenChamber",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/d0kur0/openchamber-openspec.git"
   }
 }

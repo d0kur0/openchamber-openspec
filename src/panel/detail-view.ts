@@ -1,3 +1,4 @@
+import { t, bi } from "./i18n.js";
 import { mountBadge, mountButton, mountTabs } from "@openchamber/sdk/ui";
 import { documentKey, type DocumentDescriptor, type Task } from "../contracts.js";
 import type { DerivedChange } from "../model.js";
@@ -95,8 +96,8 @@ export function mountDetailView(
   path.setAttribute("stroke-linejoin", "round");
   chevron.append(path);
   backButton.prepend(chevron);
-  backButton.setAttribute("aria-label", "Back to changes");
-  backButton.title = "Back to changes";
+  backButton.setAttribute("aria-label", t("Back to changes"));
+  backButton.title = t("Back to changes");
   const title = document.createElement("h1");
   title.id = "change-detail-title";
   shell.setAttribute("aria-labelledby", title.id);
@@ -113,8 +114,8 @@ export function mountDetailView(
     onClick: callbacks.copyName,
   });
   const copyButton = copyRoot.querySelector("button")!;
-  copyButton.setAttribute("aria-label", "Copy change name");
-  copyButton.title = "Copy change name";
+  copyButton.setAttribute("aria-label", t("Copy change name"));
+  copyButton.title = t("Copy change name");
   addButtonIcon(copyRoot, "copy");
   nameGroup.append(title, copyRoot);
   titleGroup.append(nameGroup);
@@ -125,7 +126,7 @@ export function mountDetailView(
   const refreshRoot = document.createElement("span");
   refreshRoot.className = "refresh-control";
   const refresh = mountButton(refreshRoot, {
-    label: "refresh",
+    label: t("refresh"),
     variant: "ghost",
     size: "sm",
     onClick: callbacks.refresh,
@@ -134,24 +135,24 @@ export function mountDetailView(
   const deleteRoot = document.createElement("span");
   deleteRoot.className = "detail-delete";
   const deleteAction = mountButton(deleteRoot, {
-    label: "delete",
+    label: t("delete"),
     variant: "destructive",
     size: "sm",
     onClick: callbacks.delete,
   });
   const deleteButton = deleteRoot.querySelector("button")!;
-  deleteButton.setAttribute("aria-label", "Delete change");
-  deleteButton.title = "Delete change";
+  deleteButton.setAttribute("aria-label", t("Delete change"));
+  deleteButton.title = t("Delete change");
   addButtonIcon(deleteRoot, "delete");
   headingActions.append(refreshRoot, deleteRoot);
   const goal = document.createElement("p");
   goal.className = "goal";
   goal.setAttribute("role", "region");
-  goal.setAttribute("aria-label", "Recorded objective");
+  goal.setAttribute("aria-label", t("Technical ID"));
   goal.tabIndex = 0;
   const stage = document.createElement("div");
   stage.className = "stage-label";
-  const stageBadge = mountBadge(stage, { label: "Planning", tone: "neutral" });
+  const stageBadge = mountBadge(stage, { label: t("Planning"), tone: "neutral" });
   titleRow.append(stage);
   const unavailable = document.createElement("p");
   unavailable.className = "notice error detail-issue";
@@ -160,7 +161,7 @@ export function mountDetailView(
   const refreshMessage = document.createElement("span");
   const retryRoot = document.createElement("span");
   const retry = mountButton(retryRoot, {
-    label: "Retry",
+    label: t("Retry"),
     variant: "secondary",
     size: "sm",
     onClick: callbacks.refresh,
@@ -168,7 +169,7 @@ export function mountDetailView(
   refreshIssue.append(refreshMessage, retryRoot);
   const tabs = document.createElement("nav");
   tabs.className = "artifact-tabs";
-  tabs.setAttribute("aria-label", "Planning artefacts");
+  tabs.setAttribute("aria-label", t("Planning artefacts"));
   const toolbar = document.createElement("div");
   toolbar.className = "detail-toolbar";
   toolbar.append(tabs, headingActions);
@@ -190,14 +191,14 @@ export function mountDetailView(
   const action = mountPrimaryAction(actionRoot);
   const verifyRoot = document.createElement("span");
   const verify = mountButton(verifyRoot, {
-    label: "verify",
+    label: t("verify"),
     variant: "secondary",
     size: "sm",
     onClick: () => callbacks.action("verify"),
   });
   const exploreRoot = document.createElement("span");
   const explore = mountButton(exploreRoot, {
-    label: "explore",
+    label: t("explore"),
     variant: "secondary",
     size: "sm",
     onClick: () => callbacks.action("explore"),
@@ -218,7 +219,7 @@ export function mountDetailView(
       else if (id.startsWith("artifact:")) callbacks.selectArtifact(id.slice("artifact:".length));
     },
   });
-  tabs.querySelector("[role=tablist]")?.setAttribute("aria-label", "Planning artefacts");
+  tabs.querySelector("[role=tablist]")?.setAttribute("aria-label", t("Planning artefacts"));
   const files = new Map<
     string,
     { node: HTMLDetailsElement; view: ReturnType<typeof mountDocumentView> }
@@ -272,9 +273,9 @@ export function mountDetailView(
         reset();
         changeId = state.change.id;
       }
-      title.textContent = state.change.id;
+      title.textContent = state.change.goal || state.change.id;
       areas.update(state.change.affectedAreas);
-      goal.textContent = state.change.goal ?? "Goal unavailable";
+      goal.textContent = state.change.id;
       stageBadge.update({
         label: stageLabel(state.change.stage),
         tone: tones[state.change.stage],
@@ -302,7 +303,7 @@ export function mountDetailView(
       currentOwner = taskArtifact(state.change);
       const items = state.change.artifacts.map((item) => ({
         id: tabId(item.id),
-        label: artifactLabels[item.id] ?? item.id,
+        label: t(artifactLabels[item.id] ?? item.id),
         count:
           item.id === "specs"
             ? (state.change.documents ?? []).filter((document) => document.artifactId === item.id)
@@ -312,7 +313,7 @@ export function mountDetailView(
               : undefined,
       }));
       if (!currentOwner)
-        items.push({ id: fallbackId, label: "Tasks", count: state.change.totalTasks });
+        items.push({ id: fallbackId, label: t("Tasks"), count: state.change.totalTasks });
       const activeId =
         state.activeView === "tasks"
           ? currentOwner
@@ -333,7 +334,7 @@ export function mountDetailView(
       tabs.querySelectorAll<HTMLElement>("[role=tab]").forEach((tab, index) => {
         const artifact = state.change.artifacts[index];
         if (!artifact) return;
-        const label = `${items[index].label} · ${readiness[artifact.status]}${items[index].count === undefined ? "" : ` ${items[index].count}`}`;
+        const label = `${items[index].label} · ${t(readiness[artifact.status])}${items[index].count === undefined ? "" : ` ${items[index].count}`}`;
         if (tab.getAttribute("aria-label") !== label) tab.setAttribute("aria-label", label);
       });
       content.setAttribute(
@@ -353,13 +354,16 @@ export function mountDetailView(
         }) ?? [];
       const readinessMessage =
         selected?.status === "ready"
-          ? "Ready to write this artefact. Continue planning in chat."
+          ? t("Ready to write this artefact. Continue planning in chat.")
           : selected?.status === "blocked"
             ? unresolved.length
-              ? `Blocked until ${unresolved.join(", ")} is written or skipped.`
-              : "Blocked by planning prerequisites; their details are not available."
+              ? bi(
+                  `Сначала подготовьте или пропустите: ${unresolved.join(", ")}.`,
+                  `Blocked until ${unresolved.join(", ")} is written or skipped.`,
+                )
+              : t("Blocked by planning prerequisites; their details are not available.")
             : selected?.status === "skipped"
-              ? "This artefact was skipped."
+              ? t("This artefact was skipped.")
               : "";
       documents.hidden = state.activeView === "tasks";
       tasks.hidden = state.activeView !== "tasks";
@@ -381,8 +385,8 @@ export function mountDetailView(
         state.activeView === "document" && !state.unavailable && !available.length
           ? readinessMessage ||
             (state.selectedArtifact
-              ? "This artefact has no available documents yet."
-              : "This change has no available planning documents.")
+              ? t("This artefact has no available documents yet.")
+              : t("This change has no available planning documents."))
           : "";
       readinessNote.hidden = !!state.refreshError || !readinessNote.textContent;
       content.hidden = !!state.refreshError;
@@ -398,7 +402,7 @@ export function mountDetailView(
         const key = documentKey(descriptor.artifactId, descriptor.selector);
         const entry = file(descriptor);
         const status = entry.node.querySelector<HTMLElement>("summary .document-status");
-        if (status) status.textContent = state.files.get(key)?.error ? " · Read failed" : "";
+        if (status) status.textContent = state.files.get(key)?.error ? t(" · Read failed") : "";
         const current = state.files.get(key);
         entry.view.update({
           text: current?.value ?? "",

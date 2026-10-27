@@ -1,5 +1,8 @@
+import { t, bi } from "./i18n.js";
 import { mountButton, mountProgress, mountSearchField } from "@openchamber/sdk/ui";
 import type { DerivedChange } from "../model.js";
+import { preferences, savePreferences } from "./preferences.js";
+import { selectCards } from "./filters.js";
 import { stages } from "./workflow.js";
 import { mountPrimaryAction } from "./primary-action.js";
 import { mountHelpButton } from "./help-button.js";
@@ -54,7 +57,7 @@ export function mountBoardView(
   headingActions.className = "heading-actions";
   const newChangeRoot = document.createElement("span");
   const newChange = mountButton(newChangeRoot, {
-    label: "Добавить",
+    label: t("new change"),
     variant: "default",
     size: "sm",
     disabled: true,
@@ -63,7 +66,7 @@ export function mountBoardView(
   addButtonIcon(newChangeRoot, "create");
   const archiveRoot = document.createElement("span");
   const archive = mountButton(archiveRoot, {
-    label: "Архивировать завершённые",
+    label: t("archive all"),
     variant: "secondary",
     size: "sm",
     disabled: true,
@@ -79,7 +82,7 @@ export function mountBoardView(
   const refreshRoot = document.createElement("span");
   refreshRoot.className = "refresh-control";
   const refresh = mountButton(refreshRoot, {
-    label: "Обновить",
+    label: t("refresh"),
     variant: "ghost",
     size: "sm",
     onClick: callbacks.retry,
@@ -93,17 +96,89 @@ export function mountBoardView(
   let searchValue = "";
   const search = mountSearchField(searchRoot, {
     value: "",
-    placeholder: "Найти задачу",
-    label: "Найти задачу",
+    placeholder: t("Search changes"),
+    label: t("Search changes"),
     onChange: (value) => {
       searchValue = value;
       callbacks.search(value);
     },
   });
+  searchRoot.querySelector("input")?.setAttribute("data-board-search", "true");
   tallyGroup.append(tally);
   heading.append(project, tallyGroup);
+  const filterRow = document.createElement("div");
+  filterRow.className = "filter-row";
+  const stageFilter = document.createElement("select");
+  stageFilter.setAttribute("aria-label", t("Filters"));
+  for (const [id, label] of [["all", t("All stages")], ...stages.map((s) => [s.id, t(s.label)])]) {
+    const option = new Option(label, id);
+    stageFilter.add(option);
+  }
+  stageFilter.value = preferences.stage;
+  const sortFilter = document.createElement("select");
+  sortFilter.setAttribute("aria-label", t("Sort changes"));
+  for (const [id, label] of [
+    ["name", t("Name")],
+    ["progress", t("Most complete")],
+    ["remaining", t("Most remaining")],
+  ])
+    sortFilter.add(new Option(label, id));
+  sortFilter.value = preferences.sort;
+  const attentionLabel = document.createElement("label");
+  attentionLabel.className = "attention-filter";
+  const attention = document.createElement("input");
+  attention.type = "checkbox";
+  attention.checked = preferences.attention;
+  attentionLabel.append(attention, document.createTextNode(t("Needs attention")));
+  const reset = document.createElement("button");
+  reset.className = "filter-reset";
+  reset.textContent = t("Reset filters");
+  const viewToggle = document.createElement("div");
+  viewToggle.className = "view-toggle";
+  viewToggle.setAttribute("role", "group");
+  viewToggle.setAttribute("aria-label", t("Board"));
+  const boardButton = document.createElement("button"),
+    listButton = document.createElement("button");
+  boardButton.textContent = t("Board");
+  listButton.textContent = t("List");
+  viewToggle.append(boardButton, listButton);
+  let latest: BoardState | null = null;
+  function redraw() {
+    savePreferences();
+    if (latest) renderState(latest);
+  }
+  stageFilter.onchange = () => {
+    preferences.stage = stageFilter.value;
+    redraw();
+  };
+  sortFilter.onchange = () => {
+    preferences.sort = sortFilter.value as typeof preferences.sort;
+    redraw();
+  };
+  attention.onchange = () => {
+    preferences.attention = attention.checked;
+    redraw();
+  };
+  boardButton.onclick = () => {
+    preferences.view = "board";
+    redraw();
+  };
+  listButton.onclick = () => {
+    preferences.view = "list";
+    redraw();
+  };
+  reset.onclick = () => {
+    preferences.stage = "all";
+    preferences.attention = false;
+    stageFilter.value = "all";
+    attention.checked = false;
+    callbacks.search("");
+    redraw();
+  };
+  filterRow.append(stageFilter, sortFilter, attentionLabel, reset, viewToggle);
   toolbar.append(searchRoot, headingActions);
-  header.append(heading, toolbar);
+  header.append(filterRow);
+  header.prepend(heading, toolbar);
   const notices = document.createElement("div");
   notices.className = "board-notices";
   const board = document.createElement("section");
@@ -120,7 +195,15 @@ export function mountBoardView(
     board.append(section);
     return { stage, label, grid, empty };
   });
-  body.append(notices, board);
+  const filterEmpty = document.createElement("div");
+  filterEmpty.className = "filter-empty";
+  filterEmpty.hidden = true;
+  const emptyTitle = document.createElement("h2");
+  emptyTitle.textContent = t("No changes match your filters");
+  const emptyHint = document.createElement("p");
+  emptyHint.textContent = t("Try another query or reset the filters.");
+  filterEmpty.append(emptyTitle, emptyHint);
+  body.append(notices, filterEmpty, board);
   main.append(header, body);
   root.append(main);
   let noticesMounted: { dispose: () => void }[] = [];
@@ -161,21 +244,22 @@ export function mountBoardView(
       const progressLabel = document.createElement("p");
       progressLabel.className = "progress-label";
       const progressRoot = document.createElement("div");
-      const progress = mountProgress(progressRoot, { value: 0, label: "Task completion" });
+      progressRoot.className = "card-progress";
+      const progress = mountProgress(progressRoot, { value: 0, label: t("Task completion") });
       const actionRoot = document.createElement("span");
       actionRoot.className = "card-actions";
       const id = item.change.id;
       const action = mountPrimaryAction(actionRoot);
       const exploreRoot = document.createElement("span");
       const explore = mountButton(exploreRoot, {
-        label: "Разобрать",
+        label: t("explore"),
         variant: "secondary",
         size: "sm",
         onClick: () => cards.get(id)?.current.action("explore"),
       });
       const verifyRoot = document.createElement("span");
       const verify = mountButton(verifyRoot, {
-        label: "Проверить",
+        label: t("verify"),
         variant: "secondary",
         size: "sm",
         onClick: () => cards.get(id)?.current.action("verify"),
@@ -184,7 +268,10 @@ export function mountBoardView(
       title.addEventListener("click", () => cards.get(id)?.current.open());
       const status = document.createElement("p");
       status.className = "stale-label";
-      node.append(title);
+      const identifier = document.createElement("span");
+      identifier.className = "card-id";
+      identifier.textContent = id;
+      node.append(title, identifier);
       const areas = mountAreaBadges(node);
       node.append(progressLabel, progressRoot, actionRoot, status);
       entry = {
@@ -208,14 +295,22 @@ export function mountBoardView(
     const change = item.change;
     const displayTitle = change.goal?.trim() || change.id;
     if (entry.title.textContent !== displayTitle) entry.title.textContent = displayTitle;
+    entry.node.dataset.stage = change.stage;
+    entry.node.dataset.attention = String(item.stale || item.unavailable);
     entry.title.title = change.id;
     entry.areas.update(change.affectedAreas);
-    const label = `Документы: ${change.completedArtifacts}/${change.totalArtifacts}${change.totalTasks === 0 ? " · задач пока нет" : ""}`;
+    const label = bi(
+      `Документы: ${change.completedArtifacts}/${change.totalArtifacts}${change.totalTasks === 0 ? " · задач пока нет" : ""}`,
+      `Documents: ${change.completedArtifacts}/${change.totalArtifacts}${change.totalTasks === 0 ? " · No tasks yet" : ""}`,
+    );
     if (entry.progressLabel.textContent !== label) entry.progressLabel.textContent = label;
     entry.progressRoot.hidden = !change.totalTasks;
     entry.progress.update({
       value: change.totalTasks ? Math.round((100 * change.completedTasks) / change.totalTasks) : 0,
-      label: `Выполнено задач: ${change.completedTasks}/${change.totalTasks}`,
+      label: bi(
+        `Задачи: ${change.completedTasks}/${change.totalTasks}`,
+        `Tasks: ${change.completedTasks}/${change.totalTasks}`,
+      ),
     });
     entry.action.update({
       id: change.id,
@@ -229,25 +324,61 @@ export function mountBoardView(
     entry.verifyRoot.hidden = change.stage !== "complete";
     entry.verify.update({ disabled: item.unavailable });
     entry.status.hidden = !item.stale && !item.unavailable;
-    if (item.unavailable) entry.status.textContent = `${change.id} is no longer available.`;
+    if (item.unavailable)
+      entry.status.textContent = bi(
+        `${change.id}: изменение недоступно.`,
+        `${change.id} is no longer available.`,
+      );
     else if (item.stale)
-      entry.status.textContent = `${change.id} is stale; latest summary unavailable.`;
+      entry.status.textContent = bi(
+        `${change.id}: свежая сводка недоступна.`,
+        `${change.id} is stale; latest summary unavailable.`,
+      );
     return entry.node;
   }
-  return {
+  function renderState(state: BoardState) {
+    view.update(state);
+  }
+  const view = {
     setVisible(visible: boolean) {
       main.hidden = !visible;
     },
     update(state: BoardState) {
+      latest = state;
       project.textContent =
-        state.directory?.split("/").filter(Boolean).at(-1) ?? "No project selected";
+        state.directory?.split("/").filter(Boolean).at(-1) ?? t("No project selected");
       newChange.update({ disabled: !state.canCreate });
       archive.update({ disabled: !state.canArchive, loading: state.archivePending });
       if (searchValue !== state.search) {
         searchValue = state.search;
         search.update({ value: searchValue });
       }
-      tally.textContent = `Изменений: ${state.listedCount} · выполнено задач: ${state.completedTasks}/${state.totalTasks}`;
+      const filtered = selectCards(state.cards, {
+        query: state.search,
+        stage: preferences.stage,
+        attention: preferences.attention,
+        sort: preferences.sort,
+      });
+      const selectedDone = filtered.reduce((n, c) => n + c.change.completedTasks, 0);
+      const selectedTotal = filtered.reduce((n, c) => n + c.change.totalTasks, 0);
+      tally.textContent =
+        state.loading && !filtered.length
+          ? t("Loading…")
+          : bi(
+              `Показано ${filtered.length} из ${state.listedCount} · задачи ${selectedDone}/${selectedTotal}`,
+              `Showing ${filtered.length} of ${state.listedCount} · tasks ${selectedDone}/${selectedTotal}`,
+            );
+      filterEmpty.hidden =
+        filtered.length > 0 ||
+        !state.settled ||
+        state.loading ||
+        state.pendingSummaries > 0 ||
+        state.listedCount === 0;
+      board.hidden = !filterEmpty.hidden;
+      board.dataset.view = preferences.view;
+      boardButton.setAttribute("aria-pressed", String(preferences.view === "board"));
+      listButton.setAttribute("aria-pressed", String(preferences.view === "list"));
+      reset.hidden = !state.search && preferences.stage === "all" && !preferences.attention;
       refresh.update({ disabled: !state.directory, loading: state.loading });
       const nextNoticeSignature = JSON.stringify([
         !!state.directory,
@@ -303,14 +434,11 @@ export function mountBoardView(
           entry.node.remove();
       }
       for (const { stage, label, grid, empty } of sections) {
-        const matching = state.cards
-          .filter(
-            ({ change }) =>
-              change.stage === stage.id &&
-              `${change.id} ${change.goal ?? ""}`.toLocaleLowerCase().includes(query),
-          )
-          .sort((a, b) => (a.change.id < b.change.id ? -1 : a.change.id > b.change.id ? 1 : 0));
-        label.textContent = `${stage.label} ${matching.length}`;
+        const matching = filtered.filter(({ change }) => change.stage === stage.id);
+        grid.parentElement!.hidden =
+          (preferences.stage !== "all" && preferences.stage !== stage.id) ||
+          (preferences.view === "list" && !matching.length);
+        label.textContent = `${t(stage.label)} · ${matching.length}`;
         for (const child of [...grid.children]) {
           if (
             child !== empty &&
@@ -320,10 +448,10 @@ export function mountBoardView(
         }
         empty.textContent =
           state.loading && !state.settled && state.pendingSummaries
-            ? "Загрузка…"
+            ? t("Loading…")
             : query
-              ? "Ничего не найдено"
-              : "Пока пусто";
+              ? t("No matching changes")
+              : t("No changes here");
         if (!matching.length) {
           if (empty.parentElement !== grid) grid.append(empty);
         } else empty.remove();
@@ -351,4 +479,6 @@ export function mountBoardView(
       main.remove();
     },
   };
+
+  return view;
 }

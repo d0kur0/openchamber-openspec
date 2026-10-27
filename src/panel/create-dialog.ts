@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { mountButton, mountTextField } from "@openchamber/sdk/ui";
 import { isChangeName } from "../model.js";
 import { ServiceRequestError, type Client, type Scope } from "./client.js";
@@ -25,7 +26,7 @@ export function mountCreateDialog(
   const heading = document.createElement("h2");
   heading.id = "new-change-title";
   dialog.setAttribute("aria-labelledby", heading.id);
-  heading.textContent = "New change";
+  heading.textContent = t("New change");
   const nameRoot = document.createElement("div");
   const goalRoot = document.createElement("div");
   let name = "";
@@ -37,7 +38,7 @@ export function mountCreateDialog(
   let generation = 0;
   let disposed = false;
   const nameField = mountTextField(nameRoot, {
-    label: "Change name",
+    label: t("Change name"),
     value: "",
     placeholder: "add-change-board",
     mono: true,
@@ -47,9 +48,9 @@ export function mountCreateDialog(
     },
   });
   const goalField = mountTextField(goalRoot, {
-    label: "Goal",
+    label: t("Goal"),
     value: "",
-    placeholder: "What should this change make possible?",
+    placeholder: t("What should this change make possible?"),
     multiline: true,
     rows: 4,
     onChange: (value) => {
@@ -67,26 +68,26 @@ export function mountCreateDialog(
   const inspectRoot = document.createElement("span");
   const forgetRoot = document.createElement("span");
   const dismiss = mountButton(cancelRoot, {
-    label: "cancel",
+    label: t("cancel"),
     variant: "secondary",
     size: "sm",
     onClick: () => dialog.close(),
   });
   const submit = mountButton(submitRoot, {
-    label: "create",
+    label: t("create"),
     variant: "default",
     size: "sm",
     onClick: () => void submitChange(),
   });
   addButtonIcon(submitRoot, "create");
   const retry = mountButton(retryRoot, {
-    label: "Retry read",
+    label: t("Retry read"),
     variant: "secondary",
     size: "sm",
     onClick: () => void reconcile(),
   });
   const inspect = mountButton(inspectRoot, {
-    label: "Inspect change",
+    label: t("Inspect change"),
     variant: "secondary",
     size: "sm",
     onClick: () => {
@@ -96,7 +97,7 @@ export function mountCreateDialog(
     },
   });
   const forget = mountButton(forgetRoot, {
-    label: "Dismiss attempt",
+    label: t("Dismiss attempt"),
     variant: "ghost",
     size: "sm",
     onClick: () => {
@@ -109,7 +110,7 @@ export function mountCreateDialog(
         discardDraft();
         if (mode === "read-failed") {
           attempt = originalAttempt;
-          messageText = "Creation outcome is unknown. Retry the read before creating again.";
+          messageText = t("Creation outcome is unknown. Retry the read before creating again.");
         } else mode = "editing";
         dialog.close();
         return;
@@ -214,11 +215,13 @@ export function mountCreateDialog(
     const submittedName = name.trim();
     const submittedGoal = goal.trim();
     if (!isChangeName(submittedName)) {
-      nameField.update({ error: "Use lowercase letters or digits separated by single hyphens." });
+      nameField.update({
+        error: t("Use lowercase letters or digits separated by single hyphens."),
+      });
       return;
     }
     if (!submittedGoal) {
-      goalField.update({ error: "Goal is required." });
+      goalField.update({ error: t("Goal is required.") });
       return;
     }
     attempt = { scope: current, name: submittedName, goal: submittedGoal };

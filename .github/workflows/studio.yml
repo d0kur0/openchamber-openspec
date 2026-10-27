@@ -1,0 +1,29 @@
+name: Verify Studio
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - run: npm ci
+      - run: npm install --global @fission-ai/openspec@1.15.0
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm run build:model:test
+      - run: npm run build:resources:test
+      - run: npm run build:studio:test
+      - run:
+          node --test test/model.test.mjs test/resources.test.mjs test/studio.test.mjs
+          test/windows-cli.test.mjs

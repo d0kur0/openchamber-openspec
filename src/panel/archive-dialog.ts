@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { mountButton } from "@openchamber/sdk/ui";
 
 export function mountArchiveDialog(
@@ -7,12 +8,13 @@ export function mountArchiveDialog(
   const dialog = document.createElement("dialog");
   const heading = document.createElement("h2");
   heading.id = "archive-all-title";
-  heading.textContent = "Archive all completed changes?";
+  heading.textContent = t("Archive all completed changes?");
   dialog.setAttribute("aria-labelledby", heading.id);
   const description = document.createElement("p");
   description.id = "archive-all-description";
-  description.textContent =
-    "This creates a new session and sends a prompt to archive completed changes in this project. Unfinished changes will be skipped. The board stays open; use refresh to see updates.";
+  description.textContent = t(
+    "This creates a new session and sends a prompt to archive completed changes in this project. Unfinished changes will be skipped. The board stays open; use refresh to see updates.",
+  );
   dialog.setAttribute("aria-describedby", description.id);
   const actions = document.createElement("div");
   actions.className = "archive-actions";
@@ -27,13 +29,13 @@ export function mountArchiveDialog(
     opener = null;
   }
   const cancel = mountButton(cancelRoot, {
-    label: "cancel",
+    label: t("cancel"),
     variant: "secondary",
     size: "sm",
     onClick: close,
   });
   const start = mountButton(startRoot, {
-    label: "start archiving",
+    label: t("start archiving"),
     size: "sm",
     onClick: () => {
       if (!origin || origin !== callbacks.current() || !callbacks.canStart()) return;

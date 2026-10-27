@@ -1,3 +1,31 @@
+# OpenSpec Studio
+
+Русский интерфейс по умолчанию, переключение на English с сохранением в OpenChamber. Доска со
+стадиями и компактный список, поиск по названию/ID/области, фильтр стадии и проблемных сводок,
+сортировка по названию, выполнению и оставшимся задачам. Темы хоста, адаптивная панель, цели
+карточек вместо технических имён.
+
+Установка: Settings → Extensions → добавить `https://github.com/d0kur0/openchamber-openspec.git`.
+Нужен OpenSpec CLI 1.15.0 в PATH и проект с `openspec/`. ID расширения прежний `openspec-board`; при
+установленном оригинале используйте замену, а не вторую копию. Windows npm CLI запускается напрямую
+через Node без shell.
+
+Выбор языка возвращает на доску. Содержимое документов и цели не переводятся. Фильтры не меняют
+файлы, статусы и не запускают агентов. «Проблемные» означает stale/unavailable сводки. Основное
+действие готовит неотправленный запрос; запуск в отдельной копии и архивация имеют прежнюю семантику
+OpenSpec.
+
+Форк
+[jaythomasonprojects/openchamber-openspec](https://github.com/jaythomasonprojects/openchamber-openspec),
+MIT; исходная лицензия и авторство сохранены. Версия Studio 1.3.0. Это не официальный релиз upstream
+и не npm-публикация.
+
+Проверки Studio: lint, typecheck, build; model/resources/studio и Windows CLI regression. CI
+выполняет эту выборку на Ubuntu/Windows. Полный upstream suite (включая браузерные тесты и Unix
+helpers) отдельно не объявляется пройденным. Направление и условия приёмки: DESIGN.md.
+
+---
+
 # OpenSpec for OpenChamber
 
 A kanban board for the OpenSpec changes in your OpenChamber project or worktree. See each change's

@@ -1,11 +1,12 @@
+import { t } from "./i18n.js";
 import { mountButton } from "@openchamber/sdk/ui";
 
 export function mountHelpButton(root: HTMLElement, onClick: () => void) {
   root.className = "help-control";
   const handle = mountButton(root, { label: "", variant: "ghost", size: "sm", onClick });
   const button = root.querySelector("button")!;
-  button.setAttribute("aria-label", "OpenSpec quickstart");
-  button.title = "OpenSpec quickstart";
+  button.setAttribute("aria-label", t("OpenSpec quickstart"));
+  button.title = t("OpenSpec quickstart");
   const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   icon.setAttribute("viewBox", "0 0 24 24");
   icon.setAttribute("width", "16");

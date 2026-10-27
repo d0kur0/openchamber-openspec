@@ -1,3 +1,4 @@
+import { t } from "./i18n.js";
 import { mountButton } from "@openchamber/sdk/ui";
 import { renderDocument } from "./document-renderer.js";
 
@@ -38,7 +39,7 @@ export function mountDocumentView(
   const retryRoot = document.createElement("span");
   let onRetry = () => {};
   const retry = mountButton(retryRoot, {
-    label: "Retry document",
+    label: t("Retry document"),
     variant: "secondary",
     size: "sm",
     onClick: () => onRetry(),
@@ -70,7 +71,7 @@ export function mountDocumentView(
           const pre = document.createElement("pre");
           pre.textContent = next.text;
           content.replaceChildren(pre);
-          presentationIssue.textContent = "Document rendering failed. Original source is shown.";
+          presentationIssue.textContent = t("Document rendering failed. Original source is shown.");
           renderingFailed = true;
         }
         displayed = next.text;
@@ -78,7 +79,7 @@ export function mountDocumentView(
       }
       content.hidden = !next.hasContent;
       presentationIssue.hidden = !next.hasContent || !renderingFailed;
-      status.textContent = next.status ?? "";
+      status.textContent = t(next.status ?? "");
       status.hidden = !next.status;
       issue.textContent = next.error ?? "";
       issue.hidden = !next.error;

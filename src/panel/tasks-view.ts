@@ -1,3 +1,4 @@
+import { t, bi } from "./i18n.js";
 import { mountButton, mountProgress } from "@openchamber/sdk/ui";
 import type { Task } from "../contracts.js";
 import type { ReadState } from "./resources.js";
@@ -7,12 +8,12 @@ export function mountTasksView(root: HTMLElement, retryRead: () => void) {
   const summary = document.createElement("p");
   summary.className = "content-status";
   const progressRoot = document.createElement("div");
-  const progress = mountProgress(progressRoot, { value: 0, label: "Task completion" });
+  const progress = mountProgress(progressRoot, { value: 0, label: t("Task completion") });
   const issue = document.createElement("p");
   issue.className = "notice error";
   const retryRoot = document.createElement("span");
   const retry = mountButton(retryRoot, {
-    label: "Retry tasks",
+    label: t("Retry tasks"),
     variant: "secondary",
     size: "sm",
     onClick: retryRead,
@@ -34,12 +35,17 @@ export function mountTasksView(root: HTMLElement, retryRead: () => void) {
           ? ""
           : state?.pending
             ? "Loading tasks…"
-            : emptyMessage || "No tasks tracked yet.";
+            : emptyMessage || t("No tasks tracked yet.");
       summary.hidden = !summary.textContent;
       progressRoot.hidden = !tasks.length;
       progress.update({
         value: tasks.length ? Math.round((completed / tasks.length) * 100) : 0,
-        label: tasks.length ? `${completed} of ${tasks.length} tasks complete` : "Task completion",
+        label: tasks.length
+          ? bi(
+              `Выполнено ${completed} из ${tasks.length}`,
+              `${completed} of ${tasks.length} tasks complete`,
+            )
+          : "Task completion",
       });
       issue.textContent = retryable ? (state?.error?.message ?? "") : "";
       issue.hidden = !issue.textContent;
@@ -66,7 +72,7 @@ export function mountTasksView(root: HTMLElement, retryRead: () => void) {
         }
         item.row.classList.toggle("done", task.done);
         item.mark.textContent = task.done ? "✓" : "○";
-        item.mark.setAttribute("aria-label", task.done ? "Complete" : "Pending");
+        item.mark.setAttribute("aria-label", task.done ? t("Complete") : t("Pending"));
         item.label.textContent = task.description;
         if (list.children[index] !== item.row)
           list.insertBefore(item.row, list.children[index] ?? null);

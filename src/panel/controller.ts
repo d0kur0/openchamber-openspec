@@ -698,6 +698,7 @@ export function mountController(host: HostClient, appRoot: HTMLElement): () => v
     },
   });
   const detailRoot = document.createElement("div");
+  detailRoot.className = "studio-detail-root";
   appRoot.append(detailRoot);
   const deleteView = mountDeleteDialog(appRoot, client, {
     current: () =>
@@ -721,7 +722,7 @@ export function mountController(host: HostClient, appRoot: HTMLElement): () => v
       render();
       loadBoard(true, true);
       queueMicrotask(() =>
-        appRoot.querySelector<HTMLInputElement>('input[aria-label="Search changes"]')?.focus(),
+        appRoot.querySelector<HTMLInputElement>("input[data-board-search]")?.focus(),
       );
     },
   });
@@ -771,9 +772,7 @@ export function mountController(host: HostClient, appRoot: HTMLElement): () => v
         const opener = [...appRoot.querySelectorAll<HTMLButtonElement>(".card-main")].find(
           (button) => button.textContent === name,
         );
-        (
-          opener ?? appRoot.querySelector<HTMLInputElement>('input[aria-label="Search changes"]')
-        )?.focus();
+        (opener ?? appRoot.querySelector<HTMLInputElement>("input[data-board-search]"))?.focus();
       });
     },
     selectArtifact,
@@ -830,6 +829,7 @@ export function mountController(host: HostClient, appRoot: HTMLElement): () => v
       })),
     });
     boardView.setVisible(!selectedChange);
+    detailRoot.hidden = !selectedChange;
     detailView.update(
       selectedChange
         ? {

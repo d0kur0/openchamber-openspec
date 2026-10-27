@@ -270,7 +270,7 @@
     let actionHandler = null;
     const pending = /* @__PURE__ */ new Map();
     const workspaceListeners = /* @__PURE__ */ new Map();
-    let disposed = false;
+    let disposed2 = false;
     const ids = { value: 0 };
     let lastReady = null;
     let lastLifecycle = null;
@@ -369,7 +369,7 @@
       }
       if (message.type === "action") {
         const answer = (payload) => {
-          if (!disposed)
+          if (!disposed2)
             post({
               channel: OPENCHAMBER_SDK_CHANNEL,
               v: OPENCHAMBER_SDK_API_VERSION,
@@ -428,7 +428,7 @@
       type: "hello"
     });
     const send = (message, timeoutMs = requestTimeoutMs) => {
-      if (disposed || target.parent === target) {
+      if (disposed2 || target.parent === target) {
         return Promise.reject(new HostRequestError("HOST_UNAVAILABLE", "No host frame. This page is not in an iframe."));
       }
       return new Promise((resolve, reject) => {
@@ -464,12 +464,12 @@
         await request({ ...envelope, type: "workspace-subscribe", id: nextId(ids), payload: { subscriptionId, query } });
       } catch (error) {
         workspaceListeners.delete(subscriptionId);
-        if (!disposed)
+        if (!disposed2)
           post({ ...envelope, type: "workspace-unsubscribe", id: nextId(ids), payload: { subscriptionId } });
         throw error;
       }
       return () => {
-        if (!workspaceListeners.delete(subscriptionId) || disposed)
+        if (!workspaceListeners.delete(subscriptionId) || disposed2)
           return;
         post({ ...envelope, type: "workspace-unsubscribe", id: nextId(ids), payload: { subscriptionId } });
       };
@@ -860,7 +860,7 @@
           post({ ...envelope, type: "workspace-unsubscribe", id: nextId(ids), payload: { subscriptionId } });
         }
         workspaceListeners.clear();
-        disposed = true;
+        disposed2 = true;
         resolveHandler = null;
         actionHandler = null;
         target.removeEventListener("message", onMessage);
@@ -1820,10 +1820,10 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     const artifacts = value.map((value2) => {
       const item = record(value2);
       const id = string(item.id);
-      const status = item.status;
-      if (status !== "done" && status !== "skipped" && status !== "ready" && status !== "blocked")
+      const status2 = item.status;
+      if (status2 !== "done" && status2 !== "skipped" && status2 !== "ready" && status2 !== "blocked")
         throw new Error("Invalid artefact status.");
-      return { id, status, outputPath: string(item.outputPath), requires: names(item.requires) };
+      return { id, status: status2, outputPath: string(item.outputPath), requires: names(item.requires) };
     });
     const byId = new Map(artifacts.map((item) => [item.id, item]));
     if (byId.size !== artifacts.length) throw new Error("Duplicate artefact.");
@@ -1928,8 +1928,8 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     );
   }
   function createClient(host2) {
-    async function request(path, body) {
-      const result = await host2.serviceRequest({ method: "POST", path, body: JSON.stringify(body) });
+    async function request(path, body2) {
+      const result = await host2.serviceRequest({ method: "POST", path, body: JSON.stringify(body2) });
       let value;
       try {
         value = JSON.parse(result.body);
@@ -2100,10 +2100,10 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     let context = null;
     let generation = 0;
     let bytes = 0;
-    let disposed = false;
+    let disposed2 = false;
     const scopeKey = (scope) => JSON.stringify([scope.directory, scope.root, scope.planning]);
     const keyFor = (scope, change, kind, artifact = "", selector = "") => JSON.stringify([scope.directory, scope.root, scope.planning, change, kind, artifact, selector]);
-    const active2 = (scope) => !disposed && !!context && scopeKey(context) === scopeKey(scope);
+    const active2 = (scope) => !disposed2 && !!context && scopeKey(context) === scopeKey(scope);
     const state = (entry) => ({
       value: entry.value,
       pending: entry.pending !== null,
@@ -2192,21 +2192,181 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
           }
       },
       dispose() {
-        disposed = true;
+        disposed2 = true;
         setContext(null);
       }
     };
   }
 
+  // src/panel/preferences.ts
+  var preferences = {
+    locale: "ru",
+    view: "board",
+    sort: "name",
+    stage: "all",
+    attention: false
+  };
+  var persist = () => {
+  };
+  function onPersist(save) {
+    persist = save;
+  }
+  function savePreferences() {
+    persist();
+  }
+  function restorePreferences(value) {
+    if (!value || typeof value !== "object") return;
+    const p = value;
+    preferences.locale = p.locale === "en" ? "en" : "ru";
+    preferences.stage = ["all", "planning", "ready", "progress", "complete"].includes(String(p.stage)) ? String(p.stage) : "all";
+    preferences.attention = p.attention === true;
+    preferences.view = p.view === "list" ? "list" : "board";
+    preferences.sort = p.sort === "progress" || p.sort === "remaining" ? p.sort : "name";
+  }
+
+  // src/panel/i18n.ts
+  var ru = {
+    "New change": "\u041D\u043E\u0432\u043E\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0435",
+    "Change name": "\u0422\u0435\u0445\u043D\u0438\u0447\u0435\u0441\u043A\u0438\u0439 ID",
+    Goal: "\u0426\u0435\u043B\u044C",
+    "What should this change make possible?": "\u041A\u0430\u043A\u043E\u0439 \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u043D\u0443\u0436\u043D\u043E \u043F\u043E\u043B\u0443\u0447\u0438\u0442\u044C?",
+    cancel: "\u041E\u0442\u043C\u0435\u043D\u0430",
+    create: "\u0421\u043E\u0437\u0434\u0430\u0442\u044C",
+    delete: "\u0423\u0434\u0430\u043B\u0438\u0442\u044C",
+    refresh: "\u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C",
+    verify: "\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C",
+    explore: "\u0420\u0430\u0437\u043E\u0431\u0440\u0430\u0442\u044C",
+    Retry: "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C",
+    "Retry read": "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u0447\u0442\u0435\u043D\u0438\u0435",
+    "Inspect change": "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0435",
+    "Dismiss attempt": "\u0417\u0430\u043A\u0440\u044B\u0442\u044C \u043F\u043E\u043F\u044B\u0442\u043A\u0443",
+    Close: "\u0417\u0430\u043A\u0440\u044B\u0442\u044C",
+    "Retry tasks": "\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0437\u0430\u0434\u0430\u0447\u0438 \u0441\u043D\u043E\u0432\u0430",
+    "Retry document": "\u0417\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044C \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442 \u0441\u043D\u043E\u0432\u0430",
+    "Task completion": "\u0412\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u0435 \u0437\u0430\u0434\u0430\u0447",
+    Complete: "\u0417\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u043E",
+    Pending: "\u041F\u0440\u0435\u0434\u0441\u0442\u043E\u0438\u0442",
+    "Back to changes": "\u041A \u0434\u043E\u0441\u043A\u0435",
+    "Copy change name": "\u041A\u043E\u043F\u0438\u0440\u043E\u0432\u0430\u0442\u044C ID",
+    "Delete change": "\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0435",
+    "Recorded objective": "\u0426\u0435\u043B\u044C \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F",
+    "Planning artefacts": "\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F",
+    Planning: "\u041F\u0440\u043E\u0440\u0430\u0431\u043E\u0442\u043A\u0430",
+    Ready: "\u041A \u0440\u0435\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u0438",
+    "In Progress": "\u0412 \u0440\u0430\u0431\u043E\u0442\u0435",
+    Written: "\u041F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u043B\u0435\u043D",
+    "Ready to write": "\u041C\u043E\u0436\u043D\u043E \u043F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u0438\u0442\u044C",
+    Blocked: "\u041E\u0436\u0438\u0434\u0430\u0435\u0442 \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u043E\u0432",
+    Skipped: "\u041F\u0440\u043E\u043F\u0443\u0449\u0435\u043D",
+    Proposal: "\u041F\u043E\u0441\u0442\u0430\u043D\u043E\u0432\u043A\u0430",
+    Specs: "\u0422\u0440\u0435\u0431\u043E\u0432\u0430\u043D\u0438\u044F",
+    Design: "\u0420\u0435\u0448\u0435\u043D\u0438\u0435",
+    Tasks: "\u0417\u0430\u0434\u0430\u0447\u0438",
+    "Goal unavailable": "\u0426\u0435\u043B\u044C \u043D\u0435 \u0443\u043A\u0430\u0437\u0430\u043D\u0430",
+    "OpenSpec quickstart": "\u041A\u0430\u043A \u0440\u0430\u0431\u043E\u0442\u0430\u0442\u044C \u0441 OpenSpec",
+    "No project selected": "\u041F\u0440\u043E\u0435\u043A\u0442 \u043D\u0435 \u0432\u044B\u0431\u0440\u0430\u043D",
+    "No changes here": "\u041F\u043E\u043A\u0430 \u043F\u0443\u0441\u0442\u043E",
+    "No matching changes": "\u041D\u0438\u0447\u0435\u0433\u043E \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E",
+    "Loading\u2026": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430\u2026",
+    "Search changes": "\u041F\u043E\u0438\u0441\u043A \u043F\u043E \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044E, ID \u0438\u043B\u0438 \u0441\u0435\u0440\u0432\u0438\u0441\u0443",
+    "new change": "\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C",
+    "archive all": "\u0412 \u0430\u0440\u0445\u0438\u0432",
+    "Prepare in current chat": "\u041F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u0438\u0442\u044C \u0432 \u044D\u0442\u043E\u043C \u0447\u0430\u0442\u0435",
+    "Run in new worktree": "\u0417\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C \u0432 \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u043E\u0439 \u043A\u043E\u043F\u0438\u0438",
+    propose: "\u041F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u0438\u0442\u044C",
+    apply: "\u0420\u0435\u0430\u043B\u0438\u0437\u043E\u0432\u0430\u0442\u044C",
+    continue: "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C",
+    archive: "\u0412 \u0430\u0440\u0445\u0438\u0432",
+    "Archive all completed changes?": "\u0410\u0440\u0445\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D\u043D\u044B\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F?",
+    "start archiving": "\u041D\u0430\u0447\u0430\u0442\u044C \u0430\u0440\u0445\u0438\u0432\u0430\u0446\u0438\u044E",
+    "This creates a new session and sends a prompt to archive completed changes in this project. Unfinished changes will be skipped. The board stays open; use refresh to see updates.": "\u0411\u0443\u0434\u0435\u0442 \u0441\u043E\u0437\u0434\u0430\u043D \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u044B\u0439 \u0447\u0430\u0442 \u0438 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D \u0437\u0430\u043F\u0440\u043E\u0441 \u043D\u0430 \u0430\u0440\u0445\u0438\u0432\u0430\u0446\u0438\u044E \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D\u043D\u044B\u0445 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0439. \u041D\u0435\u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D\u043D\u044B\u0435 \u0431\u0443\u0434\u0443\u0442 \u043F\u0440\u043E\u043F\u0443\u0449\u0435\u043D\u044B. \u0414\u043E\u0441\u043A\u0430 \u043E\u0441\u0442\u0430\u043D\u0435\u0442\u0441\u044F \u043E\u0442\u043A\u0440\u044B\u0442\u043E\u0439; \u0440\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u043F\u043E\u044F\u0432\u0438\u0442\u0441\u044F \u043F\u043E\u0441\u043B\u0435 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u044F.",
+    "Document rendering failed. Original source is shown.": "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u043E\u0442\u043E\u0431\u0440\u0430\u0437\u0438\u0442\u044C \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442. \u041F\u043E\u043A\u0430\u0437\u0430\u043D \u0438\u0441\u0445\u043E\u0434\u043D\u044B\u0439 \u0442\u0435\u043A\u0441\u0442.",
+    "This change is no longer available. Refresh or return to the board.": "\u0418\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0435 \u0431\u043E\u043B\u044C\u0448\u0435 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u043E. \u041E\u0431\u043D\u043E\u0432\u0438\u0442\u0435 \u0434\u0430\u043D\u043D\u044B\u0435 \u0438\u043B\u0438 \u0432\u0435\u0440\u043D\u0438\u0442\u0435\u0441\u044C \u043A \u0434\u043E\u0441\u043A\u0435.",
+    "Retry load": "\u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u044C \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0443",
+    Board: "\u0414\u043E\u0441\u043A\u0430",
+    List: "\u0421\u043F\u0438\u0441\u043E\u043A",
+    "All stages": "\u0412\u0441\u0435 \u0441\u0442\u0430\u0434\u0438\u0438",
+    "Needs attention": "\u041F\u0440\u043E\u0431\u043B\u0435\u043C\u043D\u044B\u0435",
+    Name: "\u041F\u043E \u043D\u0430\u0437\u0432\u0430\u043D\u0438\u044E",
+    "Most complete": "\u041F\u043E \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u0438\u044E",
+    "Most remaining": "\u0411\u043E\u043B\u044C\u0448\u0435 \u043E\u0441\u0442\u0430\u043B\u043E\u0441\u044C",
+    "Sort changes": "\u0421\u043E\u0440\u0442\u0438\u0440\u043E\u0432\u043A\u0430",
+    "Interface language": "\u042F\u0437\u044B\u043A \u0438\u043D\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u0430",
+    "Reset filters": "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C",
+    Filters: "\u0424\u0438\u043B\u044C\u0442\u0440\u044B",
+    Changes: "\u0418\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F",
+    shown: "\u043F\u043E\u043A\u0430\u0437\u0430\u043D\u043E",
+    "No changes match your filters": "\u041F\u043E \u044D\u0442\u0438\u043C \u0444\u0438\u043B\u044C\u0442\u0440\u0430\u043C \u043D\u0438\u0447\u0435\u0433\u043E \u043D\u0435\u0442",
+    "Try another query or reset the filters.": "\u0418\u0437\u043C\u0435\u043D\u0438\u0442\u0435 \u0437\u0430\u043F\u0440\u043E\u0441 \u0438\u043B\u0438 \u0441\u0431\u0440\u043E\u0441\u044C\u0442\u0435 \u0444\u0438\u043B\u044C\u0442\u0440\u044B.",
+    "Read-only planning view": "\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B \u0438 \u0445\u043E\u0434 \u0440\u0430\u0431\u043E\u0442\u044B",
+    "No tasks yet": "\u0417\u0430\u0434\u0430\u0447 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442",
+    "Read failed": "\u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F",
+    "No tasks": "\u0417\u0430\u0434\u0430\u0447 \u043D\u0435\u0442"
+  };
+  Object.assign(ru, {
+    "Loading tasks\u2026": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0437\u0430\u0434\u0430\u0447\u2026",
+    "No tasks tracked yet.": "\u0417\u0430\u0434\u0430\u0447\u0438 \u0435\u0449\u0451 \u043D\u0435 \u043E\u043F\u0438\u0441\u0430\u043D\u044B.",
+    "Ready to write this artefact. Continue planning in chat.": "\u041C\u043E\u0436\u043D\u043E \u043F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u0438\u0442\u044C \u044D\u0442\u043E\u0442 \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442. \u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u0435 \u043F\u0440\u043E\u0440\u0430\u0431\u043E\u0442\u043A\u0443 \u0432 \u0447\u0430\u0442\u0435.",
+    "Blocked by planning prerequisites; their details are not available.": "\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u043D\u0443\u0436\u043D\u044B \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0438\u0435 \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B; \u043F\u043E\u0434\u0440\u043E\u0431\u043D\u043E\u0441\u0442\u0438 \u043F\u043E\u043A\u0430 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u044B.",
+    "This artefact was skipped.": "\u042D\u0442\u043E\u0442 \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442 \u043F\u0440\u043E\u043F\u0443\u0449\u0435\u043D.",
+    "This artefact has no available documents yet.": "\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442 \u0435\u0449\u0451 \u043D\u0435 \u043F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u043B\u0435\u043D.",
+    "This change has no available planning documents.": "\u0412 \u044D\u0442\u043E\u043C \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0438 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442 \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u043E\u0432.",
+    "Use lowercase letters or digits separated by single hyphens.": "\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0439\u0442\u0435 \u043B\u0430\u0442\u0438\u043D\u0441\u043A\u0438\u0435 \u0431\u0443\u043A\u0432\u044B \u0432 \u043D\u0438\u0436\u043D\u0435\u043C \u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0435, \u0446\u0438\u0444\u0440\u044B \u0438 \u043E\u0434\u0438\u043D\u043E\u0447\u043D\u044B\u0435 \u0434\u0435\u0444\u0438\u0441\u044B.",
+    "Goal is required.": "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 \u0446\u0435\u043B\u044C \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F.",
+    "Checking the original project for a matching change\u2026": "\u041F\u0440\u043E\u0432\u0435\u0440\u044F\u0435\u043C \u043D\u0430\u043B\u0438\u0447\u0438\u0435 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F \u0432 \u0438\u0441\u0445\u043E\u0434\u043D\u043E\u043C \u043F\u0440\u043E\u0435\u043A\u0442\u0435\u2026",
+    "Creation outcome is unknown. Retry the read before creating again.": "\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u0435\u043D. \u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u0435 \u0447\u0442\u0435\u043D\u0438\u0435 \u043F\u0435\u0440\u0435\u0434 \u043D\u043E\u0432\u043E\u0439 \u043F\u043E\u043F\u044B\u0442\u043A\u043E\u0439.",
+    "Checking the original project for this change\u2026": "\u041F\u0440\u043E\u0432\u0435\u0440\u044F\u0435\u043C \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0435 \u0432 \u0438\u0441\u0445\u043E\u0434\u043D\u043E\u043C \u043F\u0440\u043E\u0435\u043A\u0442\u0435\u2026",
+    "Deletion outcome is unresolved. Retry the read of the original project before another attempt.": "\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F \u043D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u0435\u043D. \u041F\u043E\u0432\u0442\u043E\u0440\u0438\u0442\u0435 \u0447\u0442\u0435\u043D\u0438\u0435 \u0438\u0441\u0445\u043E\u0434\u043D\u043E\u0433\u043E \u043F\u0440\u043E\u0435\u043A\u0442\u0430 \u043F\u0435\u0440\u0435\u0434 \u043D\u043E\u0432\u043E\u0439 \u043F\u043E\u043F\u044B\u0442\u043A\u043E\u0439."
+  });
+  Object.assign(ru, {
+    "Loading document\u2026": "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0434\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u0430\u2026",
+    "Technical ID": "\u0422\u0435\u0445\u043D\u0438\u0447\u0435\u0441\u043A\u0438\u0439 ID",
+    " \xB7 Read failed": " \xB7 \u041E\u0448\u0438\u0431\u043A\u0430 \u0447\u0442\u0435\u043D\u0438\u044F"
+  });
+  var english = {
+    "new change": "Add change",
+    "archive all": "Archive completed",
+    refresh: "Refresh",
+    propose: "Prepare",
+    apply: "Implement",
+    continue: "Continue",
+    archive: "Archive",
+    verify: "Verify",
+    explore: "Explore",
+    cancel: "Cancel",
+    delete: "Delete",
+    create: "Create",
+    "start archiving": "Start archiving"
+  };
+  function t(text2) {
+    return preferences.locale === "ru" ? ru[text2] ?? text2 : english[text2] ?? text2;
+  }
+  function bi(russian, english2) {
+    return preferences.locale === "ru" ? russian : english2;
+  }
+
+  // src/panel/filters.ts
+  function selectCards(cards, filters) {
+    const query = filters.query.trim().toLocaleLowerCase();
+    return cards.filter(
+      (card) => (filters.stage === "all" || card.change.stage === filters.stage) && (!filters.attention || card.stale || card.unavailable) && `${card.change.id} ${card.change.goal ?? ""} ${card.change.affectedAreas.join(" ")}`.toLocaleLowerCase().includes(query)
+    ).sort((a, b) => {
+      const ca = a.change, cb = b.change;
+      const ratio = (c) => c.totalTasks ? c.completedTasks / c.totalTasks : 0;
+      const result = filters.sort === "progress" ? ratio(cb) - ratio(ca) : filters.sort === "remaining" ? cb.totalTasks - cb.completedTasks - (ca.totalTasks - ca.completedTasks) : (ca.goal || ca.id).localeCompare(cb.goal || cb.id, void 0, { numeric: true });
+      return result || ca.id.localeCompare(cb.id);
+    });
+  }
+
   // src/panel/workflow.ts
   var stages = [
-    { id: "planning", label: "\u041F\u0440\u043E\u0440\u0430\u0431\u043E\u0442\u043A\u0430", action: "propose" },
-    { id: "ready", label: "\u041A \u0440\u0435\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u0438", action: "apply" },
-    { id: "progress", label: "\u0412 \u0440\u0430\u0431\u043E\u0442\u0435", action: "continue" },
-    { id: "complete", label: "\u0417\u0430\u0432\u0435\u0440\u0448\u0435\u043D\u043E", action: "archive" }
+    { id: "planning", label: "Planning", action: "propose" },
+    { id: "ready", label: "Ready", action: "apply" },
+    { id: "progress", label: "In Progress", action: "continue" },
+    { id: "complete", label: "Complete", action: "archive" }
   ];
-  var workflowLabel = (stage) => ({ planning: "\u041F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u0438\u0442\u044C", ready: "\u0420\u0435\u0430\u043B\u0438\u0437\u043E\u0432\u0430\u0442\u044C", progress: "\u041F\u0440\u043E\u0434\u043E\u043B\u0436\u0438\u0442\u044C", complete: "\u0412 \u0430\u0440\u0445\u0438\u0432" })[stage];
-  var stageLabel = (stage) => stages.find((item) => item.id === stage).label;
+  var workflowLabel = (stage) => t(stages.find((s) => s.id === stage).action);
+  var stageLabel = (stage) => t(stages.find((s) => s.id === stage).label);
 
   // src/panel/primary-action.ts
   function mountPrimaryAction(root2) {
@@ -2216,12 +2376,12 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     let state = null;
     let opened = null;
     const button2 = mountButton(buttonRoot, {
-      label: "\u041F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u0438\u0442\u044C",
+      label: t("propose"),
       size: "sm",
       onClick: () => state?.action("primary")
     });
     const menu = mountMenu(menuRoot, {
-      label: "\u0420\u0435\u0430\u043B\u0438\u0437\u043E\u0432\u0430\u0442\u044C",
+      label: t("apply"),
       size: "sm",
       variant: "default",
       items: [],
@@ -2247,10 +2407,10 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
         button2.update({ label: workflowLabel(next.stage), disabled: next.disabled });
         menu.update({
           items: [
-            { id: "current", label: "\u041F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u0438\u0442\u044C \u0432 \u0442\u0435\u043A\u0443\u0449\u0435\u043C \u0447\u0430\u0442\u0435", disabled: next.disabled },
+            { id: "current", label: t("Prepare in current chat"), disabled: next.disabled },
             {
               id: "worktree",
-              label: "\u0417\u0430\u043F\u0443\u0441\u0442\u0438\u0442\u044C \u0432 \u043E\u0442\u0434\u0435\u043B\u044C\u043D\u043E\u0439 \u0440\u0430\u0431\u043E\u0447\u0435\u0439 \u043A\u043E\u043F\u0438\u0438",
+              label: t("Run in new worktree"),
               disabled: next.disabled || next.pending
             }
           ]
@@ -2273,8 +2433,8 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     root2.className = "help-control";
     const handle = mountButton(root2, { label: "", variant: "ghost", size: "sm", onClick });
     const button2 = root2.querySelector("button");
-    button2.setAttribute("aria-label", "OpenSpec quickstart");
-    button2.title = "OpenSpec quickstart";
+    button2.setAttribute("aria-label", t("OpenSpec quickstart"));
+    button2.title = t("OpenSpec quickstart");
     const icon2 = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     icon2.setAttribute("viewBox", "0 0 24 24");
     icon2.setAttribute("width", "16");
@@ -2366,8 +2526,8 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     main.className = "board-shell";
     const header = document.createElement("header");
     header.className = "board-header";
-    const body = document.createElement("div");
-    body.className = "view-body board-body";
+    const body2 = document.createElement("div");
+    body2.className = "view-body board-body";
     const heading = document.createElement("div");
     heading.className = "heading";
     const project = document.createElement("h1");
@@ -2375,7 +2535,7 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     headingActions.className = "heading-actions";
     const newChangeRoot = document.createElement("span");
     const newChange = mountButton(newChangeRoot, {
-      label: "\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C",
+      label: t("new change"),
       variant: "default",
       size: "sm",
       disabled: true,
@@ -2384,7 +2544,7 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     addButtonIcon(newChangeRoot, "create");
     const archiveRoot = document.createElement("span");
     const archive = mountButton(archiveRoot, {
-      label: "\u0410\u0440\u0445\u0438\u0432\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043D\u043D\u044B\u0435",
+      label: t("archive all"),
       variant: "secondary",
       size: "sm",
       disabled: true,
@@ -2400,7 +2560,7 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     const refreshRoot = document.createElement("span");
     refreshRoot.className = "refresh-control";
     const refresh = mountButton(refreshRoot, {
-      label: "\u041E\u0431\u043D\u043E\u0432\u0438\u0442\u044C",
+      label: t("refresh"),
       variant: "ghost",
       size: "sm",
       onClick: callbacks.retry
@@ -2414,17 +2574,88 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     let searchValue = "";
     const search = mountSearchField(searchRoot, {
       value: "",
-      placeholder: "\u041D\u0430\u0439\u0442\u0438 \u0437\u0430\u0434\u0430\u0447\u0443",
-      label: "\u041D\u0430\u0439\u0442\u0438 \u0437\u0430\u0434\u0430\u0447\u0443",
+      placeholder: t("Search changes"),
+      label: t("Search changes"),
       onChange: (value) => {
         searchValue = value;
         callbacks.search(value);
       }
     });
+    searchRoot.querySelector("input")?.setAttribute("data-board-search", "true");
     tallyGroup.append(tally);
     heading.append(project, tallyGroup);
+    const filterRow = document.createElement("div");
+    filterRow.className = "filter-row";
+    const stageFilter = document.createElement("select");
+    stageFilter.setAttribute("aria-label", t("Filters"));
+    for (const [id, label] of [["all", t("All stages")], ...stages.map((s) => [s.id, t(s.label)])]) {
+      const option = new Option(label, id);
+      stageFilter.add(option);
+    }
+    stageFilter.value = preferences.stage;
+    const sortFilter = document.createElement("select");
+    sortFilter.setAttribute("aria-label", t("Sort changes"));
+    for (const [id, label] of [
+      ["name", t("Name")],
+      ["progress", t("Most complete")],
+      ["remaining", t("Most remaining")]
+    ])
+      sortFilter.add(new Option(label, id));
+    sortFilter.value = preferences.sort;
+    const attentionLabel = document.createElement("label");
+    attentionLabel.className = "attention-filter";
+    const attention = document.createElement("input");
+    attention.type = "checkbox";
+    attention.checked = preferences.attention;
+    attentionLabel.append(attention, document.createTextNode(t("Needs attention")));
+    const reset = document.createElement("button");
+    reset.className = "filter-reset";
+    reset.textContent = t("Reset filters");
+    const viewToggle = document.createElement("div");
+    viewToggle.className = "view-toggle";
+    viewToggle.setAttribute("role", "group");
+    viewToggle.setAttribute("aria-label", t("Board"));
+    const boardButton = document.createElement("button"), listButton = document.createElement("button");
+    boardButton.textContent = t("Board");
+    listButton.textContent = t("List");
+    viewToggle.append(boardButton, listButton);
+    let latest = null;
+    function redraw() {
+      savePreferences();
+      if (latest) renderState(latest);
+    }
+    stageFilter.onchange = () => {
+      preferences.stage = stageFilter.value;
+      redraw();
+    };
+    sortFilter.onchange = () => {
+      preferences.sort = sortFilter.value;
+      redraw();
+    };
+    attention.onchange = () => {
+      preferences.attention = attention.checked;
+      redraw();
+    };
+    boardButton.onclick = () => {
+      preferences.view = "board";
+      redraw();
+    };
+    listButton.onclick = () => {
+      preferences.view = "list";
+      redraw();
+    };
+    reset.onclick = () => {
+      preferences.stage = "all";
+      preferences.attention = false;
+      stageFilter.value = "all";
+      attention.checked = false;
+      callbacks.search("");
+      redraw();
+    };
+    filterRow.append(stageFilter, sortFilter, attentionLabel, reset, viewToggle);
     toolbar.append(searchRoot, headingActions);
-    header.append(heading, toolbar);
+    header.append(filterRow);
+    header.prepend(heading, toolbar);
     const notices = document.createElement("div");
     notices.className = "board-notices";
     const board = document.createElement("section");
@@ -2441,8 +2672,16 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
       board.append(section);
       return { stage, label, grid, empty };
     });
-    body.append(notices, board);
-    main.append(header, body);
+    const filterEmpty = document.createElement("div");
+    filterEmpty.className = "filter-empty";
+    filterEmpty.hidden = true;
+    const emptyTitle = document.createElement("h2");
+    emptyTitle.textContent = t("No changes match your filters");
+    const emptyHint = document.createElement("p");
+    emptyHint.textContent = t("Try another query or reset the filters.");
+    filterEmpty.append(emptyTitle, emptyHint);
+    body2.append(notices, filterEmpty, board);
+    main.append(header, body2);
     root2.append(main);
     let noticesMounted = [];
     let noticeSignature = "";
@@ -2465,32 +2704,36 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
         const progressLabel = document.createElement("p");
         progressLabel.className = "progress-label";
         const progressRoot = document.createElement("div");
-        const progress = mountProgress(progressRoot, { value: 0, label: "Task completion" });
+        progressRoot.className = "card-progress";
+        const progress = mountProgress(progressRoot, { value: 0, label: t("Task completion") });
         const actionRoot = document.createElement("span");
         actionRoot.className = "card-actions";
         const id = item.change.id;
         const action = mountPrimaryAction(actionRoot);
         const exploreRoot = document.createElement("span");
         const explore = mountButton(exploreRoot, {
-          label: "\u0420\u0430\u0437\u043E\u0431\u0440\u0430\u0442\u044C",
+          label: t("explore"),
           variant: "secondary",
           size: "sm",
           onClick: () => cards.get(id)?.current.action("explore")
         });
         const verifyRoot = document.createElement("span");
         const verify = mountButton(verifyRoot, {
-          label: "\u041F\u0440\u043E\u0432\u0435\u0440\u0438\u0442\u044C",
+          label: t("verify"),
           variant: "secondary",
           size: "sm",
           onClick: () => cards.get(id)?.current.action("verify")
         });
         actionRoot.prepend(exploreRoot, verifyRoot);
         title.addEventListener("click", () => cards.get(id)?.current.open());
-        const status = document.createElement("p");
-        status.className = "stale-label";
-        node.append(title);
+        const status2 = document.createElement("p");
+        status2.className = "stale-label";
+        const identifier = document.createElement("span");
+        identifier.className = "card-id";
+        identifier.textContent = id;
+        node.append(title, identifier);
         const areas = mountAreaBadges(node);
-        node.append(progressLabel, progressRoot, actionRoot, status);
+        node.append(progressLabel, progressRoot, actionRoot, status2);
         entry = {
           node,
           title,
@@ -2503,7 +2746,7 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
           exploreRoot,
           verify,
           verifyRoot,
-          status,
+          status: status2,
           current: item
         };
         cards.set(id, entry);
@@ -2512,14 +2755,22 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
       const change = item.change;
       const displayTitle = change.goal?.trim() || change.id;
       if (entry.title.textContent !== displayTitle) entry.title.textContent = displayTitle;
+      entry.node.dataset.stage = change.stage;
+      entry.node.dataset.attention = String(item.stale || item.unavailable);
       entry.title.title = change.id;
       entry.areas.update(change.affectedAreas);
-      const label = `\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B: ${change.completedArtifacts}/${change.totalArtifacts}${change.totalTasks === 0 ? " \xB7 \u0437\u0430\u0434\u0430\u0447 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442" : ""}`;
+      const label = bi(
+        `\u0414\u043E\u043A\u0443\u043C\u0435\u043D\u0442\u044B: ${change.completedArtifacts}/${change.totalArtifacts}${change.totalTasks === 0 ? " \xB7 \u0437\u0430\u0434\u0430\u0447 \u043F\u043E\u043A\u0430 \u043D\u0435\u0442" : ""}`,
+        `Documents: ${change.completedArtifacts}/${change.totalArtifacts}${change.totalTasks === 0 ? " \xB7 No tasks yet" : ""}`
+      );
       if (entry.progressLabel.textContent !== label) entry.progressLabel.textContent = label;
       entry.progressRoot.hidden = !change.totalTasks;
       entry.progress.update({
         value: change.totalTasks ? Math.round(100 * change.completedTasks / change.totalTasks) : 0,
-        label: `\u0412\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u043E \u0437\u0430\u0434\u0430\u0447: ${change.completedTasks}/${change.totalTasks}`
+        label: bi(
+          `\u0417\u0430\u0434\u0430\u0447\u0438: ${change.completedTasks}/${change.totalTasks}`,
+          `Tasks: ${change.completedTasks}/${change.totalTasks}`
+        )
       });
       entry.action.update({
         id: change.id,
@@ -2533,24 +2784,52 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
       entry.verifyRoot.hidden = change.stage !== "complete";
       entry.verify.update({ disabled: item.unavailable });
       entry.status.hidden = !item.stale && !item.unavailable;
-      if (item.unavailable) entry.status.textContent = `${change.id} is no longer available.`;
+      if (item.unavailable)
+        entry.status.textContent = bi(
+          `${change.id}: \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0435 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u043E.`,
+          `${change.id} is no longer available.`
+        );
       else if (item.stale)
-        entry.status.textContent = `${change.id} is stale; latest summary unavailable.`;
+        entry.status.textContent = bi(
+          `${change.id}: \u0441\u0432\u0435\u0436\u0430\u044F \u0441\u0432\u043E\u0434\u043A\u0430 \u043D\u0435\u0434\u043E\u0441\u0442\u0443\u043F\u043D\u0430.`,
+          `${change.id} is stale; latest summary unavailable.`
+        );
       return entry.node;
     }
-    return {
+    function renderState(state) {
+      view.update(state);
+    }
+    const view = {
       setVisible(visible) {
         main.hidden = !visible;
       },
       update(state) {
-        project.textContent = state.directory?.split("/").filter(Boolean).at(-1) ?? "No project selected";
+        latest = state;
+        project.textContent = state.directory?.split("/").filter(Boolean).at(-1) ?? t("No project selected");
         newChange.update({ disabled: !state.canCreate });
         archive.update({ disabled: !state.canArchive, loading: state.archivePending });
         if (searchValue !== state.search) {
           searchValue = state.search;
           search.update({ value: searchValue });
         }
-        tally.textContent = `\u0418\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0439: ${state.listedCount} \xB7 \u0432\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u043E \u0437\u0430\u0434\u0430\u0447: ${state.completedTasks}/${state.totalTasks}`;
+        const filtered = selectCards(state.cards, {
+          query: state.search,
+          stage: preferences.stage,
+          attention: preferences.attention,
+          sort: preferences.sort
+        });
+        const selectedDone = filtered.reduce((n, c) => n + c.change.completedTasks, 0);
+        const selectedTotal = filtered.reduce((n, c) => n + c.change.totalTasks, 0);
+        tally.textContent = state.loading && !filtered.length ? t("Loading\u2026") : bi(
+          `\u041F\u043E\u043A\u0430\u0437\u0430\u043D\u043E ${filtered.length} \u0438\u0437 ${state.listedCount} \xB7 \u0437\u0430\u0434\u0430\u0447\u0438 ${selectedDone}/${selectedTotal}`,
+          `Showing ${filtered.length} of ${state.listedCount} \xB7 tasks ${selectedDone}/${selectedTotal}`
+        );
+        filterEmpty.hidden = filtered.length > 0 || !state.settled || state.loading || state.pendingSummaries > 0 || state.listedCount === 0;
+        board.hidden = !filterEmpty.hidden;
+        board.dataset.view = preferences.view;
+        boardButton.setAttribute("aria-pressed", String(preferences.view === "board"));
+        listButton.setAttribute("aria-pressed", String(preferences.view === "list"));
+        reset.hidden = !state.search && preferences.stage === "all" && !preferences.attention;
         refresh.update({ disabled: !state.directory, loading: state.loading });
         const nextNoticeSignature = JSON.stringify([
           !!state.directory,
@@ -2605,15 +2884,14 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
             entry.node.remove();
         }
         for (const { stage, label, grid, empty } of sections) {
-          const matching = state.cards.filter(
-            ({ change }) => change.stage === stage.id && `${change.id} ${change.goal ?? ""}`.toLocaleLowerCase().includes(query)
-          ).sort((a, b) => a.change.id < b.change.id ? -1 : a.change.id > b.change.id ? 1 : 0);
-          label.textContent = `${stage.label} ${matching.length}`;
+          const matching = filtered.filter(({ change }) => change.stage === stage.id);
+          grid.parentElement.hidden = preferences.stage !== "all" && preferences.stage !== stage.id || preferences.view === "list" && !matching.length;
+          label.textContent = `${t(stage.label)} \xB7 ${matching.length}`;
           for (const child of [...grid.children]) {
             if (child !== empty && !matching.some((item) => cards.get(item.change.id)?.node === child))
               child.remove();
           }
-          empty.textContent = state.loading && !state.settled && state.pendingSummaries ? "\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430\u2026" : query ? "\u041D\u0438\u0447\u0435\u0433\u043E \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E" : "\u041F\u043E\u043A\u0430 \u043F\u0443\u0441\u0442\u043E";
+          empty.textContent = state.loading && !state.settled && state.pendingSummaries ? t("Loading\u2026") : query ? t("No matching changes") : t("No changes here");
           if (!matching.length) {
             if (empty.parentElement !== grid) grid.append(empty);
           } else empty.remove();
@@ -2641,6 +2919,7 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
         main.remove();
       }
     };
+    return view;
   }
 
   // node_modules/marked/lib/marked.esm.js
@@ -2654,16 +2933,16 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
   var A = { exec: () => null };
   function C(l3) {
     let e = [];
-    return (t) => {
-      let n = Math.max(0, Math.min(3, t - 1)), s = e[n];
+    return (t2) => {
+      let n = Math.max(0, Math.min(3, t2 - 1)), s = e[n];
       return s || (s = l3(n), e[n] = s), s;
     };
   }
   function h(l3, e = "") {
-    let t = typeof l3 == "string" ? l3 : l3.source, n = { replace: (s, r) => {
+    let t2 = typeof l3 == "string" ? l3 : l3.source, n = { replace: (s, r) => {
       let o = typeof r == "string" ? r : r.source;
-      return o = o.replace(x.caret, "$1"), t = t.replace(s, o), n;
-    }, getRegex: () => new RegExp(t, e) };
+      return o = o.replace(x.caret, "$1"), t2 = t2.replace(s, o), n;
+    }, getRegex: () => new RegExp(t2, e) };
     return n;
   }
   var _e = ((l3 = "") => {
@@ -2759,8 +3038,8 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     return l3;
   }
   function Re(l3) {
-    return l3.replace(x.numericCharacterReference, (e, t, n) => {
-      let s = t === void 0 ? Number.parseInt(n, 16) : Number.parseInt(t, 10);
+    return l3.replace(x.numericCharacterReference, (e, t2, n) => {
+      let s = t2 === void 0 ? Number.parseInt(n, 16) : Number.parseInt(t2, 10);
       return s === 0 || s > 1114111 || s >= 55296 && s <= 57343 ? "\uFFFD" : String.fromCodePoint(s);
     });
   }
@@ -2773,33 +3052,33 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     return l3;
   }
   function se(l3, e) {
-    let t = l3.replace(x.findPipe, (r, o, i) => {
+    let t2 = l3.replace(x.findPipe, (r, o, i) => {
       let u = false, a = o;
       for (; --a >= 0 && i[a] === "\\"; ) u = !u;
       return u ? "|" : " |";
-    }), n = t.split(x.splitPipe), s = 0;
+    }), n = t2.split(x.splitPipe), s = 0;
     if (n[0].trim() || n.shift(), n.length > 0 && !n.at(-1)?.trim() && n.pop(), e) if (n.length > e) n.splice(e);
     else for (; n.length < e; ) n.push("");
     for (; s < n.length; s++) n[s] = n[s].trim().replace(x.slashPipe, "|");
     return n;
   }
-  function L(l3, e, t) {
+  function L(l3, e, t2) {
     let n = l3.length;
     if (n === 0) return "";
     let s = 0;
     for (; s < n; ) {
       let r = l3.charAt(n - s - 1);
-      if (r === e && !t) s++;
-      else if (r !== e && t) s++;
+      if (r === e && !t2) s++;
+      else if (r !== e && t2) s++;
       else break;
     }
     return l3.slice(0, n - s);
   }
   function ie(l3) {
     let e = l3.split(`
-`), t = e.length - 1;
-    for (; t >= 0 && x.blankLine.test(e[t]); ) t--;
-    return e.length - t <= 2 ? l3 : e.slice(0, t + 1).join(`
+`), t2 = e.length - 1;
+    for (; t2 >= 0 && x.blankLine.test(e[t2]); ) t2--;
+    return e.length - t2 <= 2 ? l3 : e.slice(0, t2 + 1).join(`
 `);
   }
   function q(l3) {
@@ -2807,21 +3086,21 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
   }
   function Te(l3, e) {
     if (l3.indexOf(e[1]) === -1) return -1;
-    let t = 0;
+    let t2 = 0;
     for (let n = 0; n < l3.length; n++) if (l3[n] === "\\") n++;
-    else if (l3[n] === e[0]) t++;
-    else if (l3[n] === e[1] && (t--, t < 0)) return n;
-    return t > 0 ? -2 : -1;
+    else if (l3[n] === e[0]) t2++;
+    else if (l3[n] === e[1] && (t2--, t2 < 0)) return n;
+    return t2 > 0 ? -2 : -1;
   }
   function oe(l3, e = 0) {
-    let t = e, n = "";
+    let t2 = e, n = "";
     for (let s of l3) if (s === "	") {
-      let r = 4 - t % 4;
-      n += " ".repeat(r), t += r;
-    } else n += s, t++;
+      let r = 4 - t2 % 4;
+      n += " ".repeat(r), t2 += r;
+    } else n += s, t2++;
     return n;
   }
-  function Oe(l3, e, t, n, s) {
+  function Oe(l3, e, t2, n, s) {
     let r = e.href, o = e.title || null, i = l3[1].replace(s.other.outputLinkReplace, "$1"), u = l3[0].charAt(0) === "!";
     n.state.inLink = true;
     let a = n.state.linkEmitted, p = n.state.inRawBlock;
@@ -2834,22 +3113,22 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
       }
       n.state.linkEmitted = true;
     }
-    return { type: u ? "image" : "link", raw: t, href: r, title: o, text: i, tokens: c };
+    return { type: u ? "image" : "link", raw: t2, href: r, title: o, text: i, tokens: c };
   }
-  function yt(l3, e, t) {
-    let n = l3.match(t.other.indentCodeCompensation);
+  function yt(l3, e, t2) {
+    let n = l3.match(t2.other.indentCodeCompensation);
     if (n === null) return e;
     let s = n[1];
     return e.split(`
 `).map((r) => {
-      let o = r.match(t.other.beginningSpace);
+      let o = r.match(t2.other.beginningSpace);
       if (o === null) return r;
       let [i] = o;
       return r.slice(Math.min(i.length, s.length));
     }).join(`
 `);
   }
-  function we(l3, e, t, n) {
+  function we(l3, e, t2, n) {
     if (!e.includes("<")) return false;
     for (let s = 0; s < e.length; s++) {
       if (e[s] === "\\") {
@@ -2864,7 +3143,7 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
         }
       }
       if (e[s] !== "<") continue;
-      let r = l3.slice(t + s), o = n.inline.tag.exec(r) || n.inline.autolink.exec(r);
+      let r = l3.slice(t2 + s), o = n.inline.tag.exec(r) || n.inline.autolink.exec(r);
       if (o) {
         if (o[0].length > e.length - s) return true;
         s += o[0].length - 1;
@@ -2880,44 +3159,44 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
       this.options = e || y;
     }
     space(e) {
-      let t = this.rules.block.newline.exec(e);
-      if (t && t[0].length > 0) return { type: "space", raw: t[0] };
+      let t2 = this.rules.block.newline.exec(e);
+      if (t2 && t2[0].length > 0) return { type: "space", raw: t2[0] };
     }
     code(e) {
-      let t = this.rules.block.code.exec(e);
-      if (t) {
-        let n = this.options.pedantic ? t[0] : ie(t[0]), s = n.replace(this.rules.other.codeRemoveIndent, "");
+      let t2 = this.rules.block.code.exec(e);
+      if (t2) {
+        let n = this.options.pedantic ? t2[0] : ie(t2[0]), s = n.replace(this.rules.other.codeRemoveIndent, "");
         return { type: "code", raw: n, codeBlockStyle: "indented", text: s };
       }
     }
     fences(e) {
-      let t = this.rules.block.fences.exec(e);
-      if (t) {
-        let n = t[0], s = yt(n, t[3] || "", this.rules);
-        return { type: "code", raw: n, lang: t[2] ? t[2].trim().replace(this.rules.inline.anyPunctuation, "$1") : t[2], text: s };
+      let t2 = this.rules.block.fences.exec(e);
+      if (t2) {
+        let n = t2[0], s = yt(n, t2[3] || "", this.rules);
+        return { type: "code", raw: n, lang: t2[2] ? t2[2].trim().replace(this.rules.inline.anyPunctuation, "$1") : t2[2], text: s };
       }
     }
     heading(e) {
-      let t = this.rules.block.heading.exec(e);
-      if (t) {
-        let n = t[2].trim();
+      let t2 = this.rules.block.heading.exec(e);
+      if (t2) {
+        let n = t2[2].trim();
         if (this.rules.other.endingHash.test(n)) {
           let s = L(n, "#");
           (this.options.pedantic || !s || this.rules.other.endingSpaceTabChar.test(s)) && (n = s.trim());
         }
-        return { type: "heading", raw: L(t[0], `
-`), depth: t[1].length, text: n, tokens: this.lexer.inline(n) };
+        return { type: "heading", raw: L(t2[0], `
+`), depth: t2[1].length, text: n, tokens: this.lexer.inline(n) };
       }
     }
     hr(e) {
-      let t = this.rules.block.hr.exec(e);
-      if (t) return { type: "hr", raw: L(t[0], `
+      let t2 = this.rules.block.hr.exec(e);
+      if (t2) return { type: "hr", raw: L(t2[0], `
 `) };
     }
     blockquote(e) {
-      let t = this.rules.block.blockquote.exec(e);
-      if (t) {
-        let n = L(t[0], `
+      let t2 = this.rules.block.blockquote.exec(e);
+      if (t2) {
+        let n = L(t2[0], `
 `).split(`
 `), s = "", r = "", o = [];
         for (; n.length > 0; ) {
@@ -2960,17 +3239,17 @@ ${Z.join(`
       }
     }
     list(e) {
-      let t = this.rules.block.list.exec(e);
-      if (t) {
-        let n = t[1].trim(), s = n.length > 1, r = { type: "list", raw: "", ordered: s, start: s ? +n.slice(0, -1) : "", loose: false, items: [] };
+      let t2 = this.rules.block.list.exec(e);
+      if (t2) {
+        let n = t2[1].trim(), s = n.length > 1, r = { type: "list", raw: "", ordered: s, start: s ? +n.slice(0, -1) : "", loose: false, items: [] };
         n = s ? `\\d{1,9}\\${n.slice(-1)}` : `\\${n}`, this.options.pedantic && (n = s ? n : "[*+-]");
         let o = this.rules.other.listItemRegex(n), i = false;
         for (; e; ) {
           let a = false, p = "", c = "";
-          if (!(t = o.exec(e)) || this.rules.block.hr.test(e)) break;
-          p = t[0], e = e.substring(p.length);
-          let d = t[2].split(`
-`, 1)[0], m = t[1].length, b = this.options.pedantic ? oe(d, m) : d.replace(this.rules.other.leadingSpaceTab, (M) => oe(M, m)), g = e.split(`
+          if (!(t2 = o.exec(e)) || this.rules.block.hr.test(e)) break;
+          p = t2[0], e = e.substring(p.length);
+          let d = t2[2].split(`
+`, 1)[0], m = t2[1].length, b = this.options.pedantic ? oe(d, m) : d.replace(this.rules.other.leadingSpaceTab, (M) => oe(M, m)), g = e.split(`
 `, 1)[0], w = !b.trim(), f = 0;
           if (this.options.pedantic ? (f = 2, c = b.trimStart()) : w ? f = m + 1 : (f = b.search(this.rules.other.nonSpaceChar), f = f > 4 ? 1 : f, c = b.slice(f), f += m), w && this.rules.other.blankLine.test(g) && (p += g + `
 `, e = e.substring(g.length + 1), a = true), !a) {
@@ -3023,25 +3302,25 @@ ${Z.join(`
       }
     }
     html(e) {
-      let t = this.rules.block.html.exec(e);
-      if (t) {
-        let n = ie(t[0]);
-        return { type: "html", block: true, raw: n, pre: t[1] === "pre" || t[1] === "script" || t[1] === "style", text: n };
+      let t2 = this.rules.block.html.exec(e);
+      if (t2) {
+        let n = ie(t2[0]);
+        return { type: "html", block: true, raw: n, pre: t2[1] === "pre" || t2[1] === "script" || t2[1] === "style", text: n };
       }
     }
     def(e) {
-      let t = this.rules.block.def.exec(e);
-      if (t) {
-        let n = q(t[1]).replace(this.rules.other.multipleSpaceGlobal, " "), s = t[2] ? t[2].replace(this.rules.other.hrefBrackets, "$1").replace(this.rules.inline.anyPunctuation, "$1") : "", r = t[3] ? t[3].substring(1, t[3].length - 1).replace(this.rules.inline.anyPunctuation, "$1") : t[3];
-        return { type: "def", tag: n, raw: L(t[0], `
+      let t2 = this.rules.block.def.exec(e);
+      if (t2) {
+        let n = q(t2[1]).replace(this.rules.other.multipleSpaceGlobal, " "), s = t2[2] ? t2[2].replace(this.rules.other.hrefBrackets, "$1").replace(this.rules.inline.anyPunctuation, "$1") : "", r = t2[3] ? t2[3].substring(1, t2[3].length - 1).replace(this.rules.inline.anyPunctuation, "$1") : t2[3];
+        return { type: "def", tag: n, raw: L(t2[0], `
 `), href: s, title: r };
       }
     }
     table(e) {
-      let t = this.rules.block.table.exec(e);
-      if (!t || !this.rules.other.tableDelimiter.test(t[2])) return;
-      let n = se(t[1]), s = t[2].replace(this.rules.other.tableAlignChars, "").split("|"), r = t[3]?.trim() ? t[3].replace(this.rules.other.tableRowBlankLine, "").split(`
-`) : [], o = { type: "table", raw: L(t[0], `
+      let t2 = this.rules.block.table.exec(e);
+      if (!t2 || !this.rules.other.tableDelimiter.test(t2[2])) return;
+      let n = se(t2[1]), s = t2[2].replace(this.rules.other.tableAlignChars, "").split("|"), r = t2[3]?.trim() ? t2[3].replace(this.rules.other.tableRowBlankLine, "").split(`
+`) : [], o = { type: "table", raw: L(t2[0], `
 `), header: [], align: [], rows: [] };
       if (n.length === s.length) {
         for (let i of s) this.rules.other.tableAlignRight.test(i) ? o.align.push("right") : this.rules.other.tableAlignCenter.test(i) ? o.align.push("center") : this.rules.other.tableAlignLeft.test(i) ? o.align.push("left") : o.align.push(null);
@@ -3051,65 +3330,65 @@ ${Z.join(`
       }
     }
     lheading(e) {
-      let t = this.rules.block.lheading.exec(e);
-      if (t) {
-        let n = t[1].trim();
-        return { type: "heading", raw: L(t[0], `
-`), depth: t[2].charAt(0) === "=" ? 1 : 2, text: n, tokens: this.lexer.inline(n) };
+      let t2 = this.rules.block.lheading.exec(e);
+      if (t2) {
+        let n = t2[1].trim();
+        return { type: "heading", raw: L(t2[0], `
+`), depth: t2[2].charAt(0) === "=" ? 1 : 2, text: n, tokens: this.lexer.inline(n) };
       }
     }
     paragraph(e) {
-      let t = this.rules.block.paragraph.exec(e);
-      if (t) {
-        let n = t[1].charAt(t[1].length - 1) === `
-` ? t[1].slice(0, -1) : t[1];
-        return { type: "paragraph", raw: t[0], text: n, tokens: this.lexer.inline(n) };
+      let t2 = this.rules.block.paragraph.exec(e);
+      if (t2) {
+        let n = t2[1].charAt(t2[1].length - 1) === `
+` ? t2[1].slice(0, -1) : t2[1];
+        return { type: "paragraph", raw: t2[0], text: n, tokens: this.lexer.inline(n) };
       }
     }
     text(e) {
-      let t = this.rules.block.text.exec(e);
-      if (t) return { type: "text", raw: t[0], text: t[0], tokens: this.lexer.inline(t[0]) };
+      let t2 = this.rules.block.text.exec(e);
+      if (t2) return { type: "text", raw: t2[0], text: t2[0], tokens: this.lexer.inline(t2[0]) };
     }
     escape(e) {
-      let t = this.rules.inline.escape.exec(e);
-      if (t) return { type: "escape", raw: t[0], text: t[1] };
+      let t2 = this.rules.inline.escape.exec(e);
+      if (t2) return { type: "escape", raw: t2[0], text: t2[1] };
     }
     tag(e) {
-      let t = this.rules.inline.tag.exec(e);
-      if (t) return !this.lexer.state.inLink && this.rules.other.startATag.test(t[0]) ? this.lexer.state.inLink = true : this.lexer.state.inLink && this.rules.other.endATag.test(t[0]) && (this.lexer.state.inLink = false), !this.lexer.state.inRawBlock && this.rules.other.startPreScriptTag.test(t[0]) ? this.lexer.state.inRawBlock = true : this.lexer.state.inRawBlock && this.rules.other.endPreScriptTag.test(t[0]) && (this.lexer.state.inRawBlock = false), { type: "html", raw: t[0], inLink: this.lexer.state.inLink, inRawBlock: this.lexer.state.inRawBlock, block: false, text: t[0] };
+      let t2 = this.rules.inline.tag.exec(e);
+      if (t2) return !this.lexer.state.inLink && this.rules.other.startATag.test(t2[0]) ? this.lexer.state.inLink = true : this.lexer.state.inLink && this.rules.other.endATag.test(t2[0]) && (this.lexer.state.inLink = false), !this.lexer.state.inRawBlock && this.rules.other.startPreScriptTag.test(t2[0]) ? this.lexer.state.inRawBlock = true : this.lexer.state.inRawBlock && this.rules.other.endPreScriptTag.test(t2[0]) && (this.lexer.state.inRawBlock = false), { type: "html", raw: t2[0], inLink: this.lexer.state.inLink, inRawBlock: this.lexer.state.inRawBlock, block: false, text: t2[0] };
     }
     link(e) {
-      let t = this.rules.inline.link.exec(e);
-      if (t) {
-        let n = t[0].charAt(0) === "!" ? 2 : 1;
-        if (!this.options.pedantic && we(e, t[1], n, this.rules)) return;
-        let s = t[2].trim();
+      let t2 = this.rules.inline.link.exec(e);
+      if (t2) {
+        let n = t2[0].charAt(0) === "!" ? 2 : 1;
+        if (!this.options.pedantic && we(e, t2[1], n, this.rules)) return;
+        let s = t2[2].trim();
         if (!this.options.pedantic && this.rules.other.startAngleBracket.test(s)) {
           if (!this.rules.other.endAngleBracket.test(s)) return;
           let i = L(s.slice(0, -1), "\\");
           if ((s.length - i.length) % 2 === 0) return;
         } else {
-          let i = Te(t[2], "()");
+          let i = Te(t2[2], "()");
           if (i === -2) return;
           if (i > -1) {
-            let a = (t[0].indexOf("!") === 0 ? 5 : 4) + t[1].length + i;
-            t[2] = t[2].substring(0, i), t[0] = t[0].substring(0, a).trim(), t[3] = "";
+            let a = (t2[0].indexOf("!") === 0 ? 5 : 4) + t2[1].length + i;
+            t2[2] = t2[2].substring(0, i), t2[0] = t2[0].substring(0, a).trim(), t2[3] = "";
           }
         }
-        let r = t[2], o = "";
+        let r = t2[2], o = "";
         if (this.options.pedantic) {
           let i = this.rules.other.pedanticHrefTitle.exec(r);
           i && (r = i[1], o = i[3]);
-        } else o = t[3] ? t[3].slice(1, -1) : "";
-        return r = r.trim(), this.rules.other.startAngleBracket.test(r) && (this.options.pedantic && !this.rules.other.endAngleBracket.test(s) ? r = r.slice(1) : r = r.slice(1, -1)), Oe(t, { href: r && r.replace(this.rules.inline.anyPunctuation, "$1"), title: o && o.replace(this.rules.inline.anyPunctuation, "$1") }, t[0], this.lexer, this.rules);
+        } else o = t2[3] ? t2[3].slice(1, -1) : "";
+        return r = r.trim(), this.rules.other.startAngleBracket.test(r) && (this.options.pedantic && !this.rules.other.endAngleBracket.test(s) ? r = r.slice(1) : r = r.slice(1, -1)), Oe(t2, { href: r && r.replace(this.rules.inline.anyPunctuation, "$1"), title: o && o.replace(this.rules.inline.anyPunctuation, "$1") }, t2[0], this.lexer, this.rules);
       }
     }
-    reflink(e, t) {
+    reflink(e, t2) {
       let n;
       if ((n = this.rules.inline.reflink.exec(e)) || (n = this.rules.inline.nolink.exec(e))) {
         let s = n[0].charAt(0) === "!" ? 2 : 1;
         if (!this.options.pedantic && we(e, n[1], s, this.rules)) return;
-        let r = (n[2] || n[1]).replace(this.rules.other.multipleSpaceGlobal, " "), o = t[q(r)];
+        let r = (n[2] || n[1]).replace(this.rules.other.multipleSpaceGlobal, " "), o = t2[q(r)];
         if (!o) {
           let i = n[0].charAt(0);
           return { type: "text", raw: i, text: i };
@@ -3117,12 +3396,12 @@ ${Z.join(`
         return Oe(n, o, n[0], this.lexer, this.rules);
       }
     }
-    emStrong(e, t, n = "") {
+    emStrong(e, t2, n = "") {
       let s = this.rules.inline.emStrongLDelim.exec(e);
       if (!s || !s[1] && !s[2] && !s[3] && !s[4] || s[4] && n.match(this.rules.other.unicodeAlphaNumeric)) return;
       if (!(s[1] || s[3] || "") || !n || this.rules.inline.punctuation.exec(n)) {
         let o = [...s[0]].length - 1, i, u, a = o, p = 0, c = s[0][0], d = n === c, m = c === "*" ? this.rules.inline.emStrongRDelimAst : this.rules.inline.emStrongRDelimUnd;
-        for (m.lastIndex = 0, t = t.slice(-1 * e.length + o); (s = m.exec(t)) !== null; ) {
+        for (m.lastIndex = 0, t2 = t2.slice(-1 * e.length + o); (s = m.exec(t2)) !== null; ) {
           if (i = s[1] || s[2] || s[3] || s[4] || s[5] || s[6], !i) continue;
           if (u = [...i].length, s[3] || s[4]) {
             a += u;
@@ -3147,22 +3426,22 @@ ${Z.join(`
       }
     }
     codespan(e) {
-      let t = this.rules.inline.code.exec(e);
-      if (t) {
-        let n = t[2].replace(this.rules.other.newLineCharGlobal, " "), s = this.rules.other.nonSpaceChar.test(n), r = this.rules.other.startingSpaceChar.test(n) && this.rules.other.endingSpaceChar.test(n);
-        return s && r && (n = n.substring(1, n.length - 1)), { type: "codespan", raw: t[0], text: n };
+      let t2 = this.rules.inline.code.exec(e);
+      if (t2) {
+        let n = t2[2].replace(this.rules.other.newLineCharGlobal, " "), s = this.rules.other.nonSpaceChar.test(n), r = this.rules.other.startingSpaceChar.test(n) && this.rules.other.endingSpaceChar.test(n);
+        return s && r && (n = n.substring(1, n.length - 1)), { type: "codespan", raw: t2[0], text: n };
       }
     }
     br(e) {
-      let t = this.rules.inline.br.exec(e);
-      if (t) return { type: "br", raw: t[0] };
+      let t2 = this.rules.inline.br.exec(e);
+      if (t2) return { type: "br", raw: t2[0] };
     }
-    del(e, t, n = "") {
+    del(e, t2, n = "") {
       let s = this.rules.inline.delLDelim.exec(e);
       if (!s) return;
       if (!(s[1] || "") || !n || this.rules.inline.punctuation.exec(n)) {
         let o = [...s[0]].length - 1, i, u, a = o, p = this.rules.inline.delRDelim;
-        for (p.lastIndex = 0, t = t.slice(-1 * e.length + o); (s = p.exec(t)) !== null; ) {
+        for (p.lastIndex = 0, t2 = t2.slice(-1 * e.length + o); (s = p.exec(t2)) !== null; ) {
           if (i = s[1] || s[2] || s[3] || s[4] || s[5] || s[6], !i || (u = [...i].length, u !== o)) continue;
           if (s[3] || s[4]) {
             a += u;
@@ -3176,32 +3455,32 @@ ${Z.join(`
       }
     }
     autolink(e) {
-      let t = this.rules.inline.autolink.exec(e);
-      if (t) {
+      let t2 = this.rules.inline.autolink.exec(e);
+      if (t2) {
         let n, s;
-        return t[2] === "@" ? (n = t[1], s = "mailto:" + n) : (n = t[1], s = n), { type: "link", raw: t[0], text: n, href: s, autolink: true, tokens: [{ type: "text", raw: n, text: n }] };
+        return t2[2] === "@" ? (n = t2[1], s = "mailto:" + n) : (n = t2[1], s = n), { type: "link", raw: t2[0], text: n, href: s, autolink: true, tokens: [{ type: "text", raw: n, text: n }] };
       }
     }
     url(e) {
-      let t;
-      if (t = this.rules.inline.url.exec(e)) {
+      let t2;
+      if (t2 = this.rules.inline.url.exec(e)) {
         let n, s;
-        if (t[2] === "@") n = t[0], s = "mailto:" + n;
+        if (t2[2] === "@") n = t2[0], s = "mailto:" + n;
         else {
           let r;
           do
-            r = t[0], t[0] = this.rules.inline._backpedal.exec(t[0])?.[0] ?? "";
-          while (r !== t[0]);
-          n = t[0], t[1] === "www." ? s = "http://" + t[0] : s = t[0];
+            r = t2[0], t2[0] = this.rules.inline._backpedal.exec(t2[0])?.[0] ?? "";
+          while (r !== t2[0]);
+          n = t2[0], t2[1] === "www." ? s = "http://" + t2[0] : s = t2[0];
         }
-        return { type: "link", raw: t[0], text: n, href: s, autolink: true, tokens: [{ type: "text", raw: n, text: n }] };
+        return { type: "link", raw: t2[0], text: n, href: s, autolink: true, tokens: [{ type: "text", raw: n, text: n }] };
       }
     }
     inlineText(e) {
-      let t = this.rules.inline.text.exec(e);
-      if (t) {
+      let t2 = this.rules.inline.text.exec(e);
+      if (t2) {
         let n = this.lexer.state.inRawBlock;
-        return { type: "text", raw: t[0], text: n ? t[0] : Re(t[0]), escaped: n };
+        return { type: "text", raw: t2[0], text: n ? t2[0] : Re(t2[0]), escaped: n };
       }
     }
   };
@@ -3213,28 +3492,28 @@ ${Z.join(`
     tokenizer;
     constructor(e) {
       this.tokens = [], this.tokens.links = /* @__PURE__ */ Object.create(null), this.options = e || y, this.options.tokenizer = this.options.tokenizer || new P(), this.tokenizer = this.options.tokenizer, this.tokenizer.options = this.options, this.tokenizer.lexer = this, this.inlineQueue = [], this.state = { inLink: false, inRawBlock: false, linkEmitted: false, top: true };
-      let t = { other: x, block: j.normal, inline: D.normal };
-      this.options.pedantic ? (t.block = j.pedantic, t.inline = D.pedantic) : this.options.gfm && (t.block = j.gfm, this.options.breaks ? t.inline = D.breaks : t.inline = D.gfm), this.tokenizer.rules = t;
+      let t2 = { other: x, block: j.normal, inline: D.normal };
+      this.options.pedantic ? (t2.block = j.pedantic, t2.inline = D.pedantic) : this.options.gfm && (t2.block = j.gfm, this.options.breaks ? t2.inline = D.breaks : t2.inline = D.gfm), this.tokenizer.rules = t2;
     }
     static get rules() {
       return { block: j, inline: D };
     }
-    static lex(e, t) {
-      return new l(t).lex(e);
+    static lex(e, t2) {
+      return new l(t2).lex(e);
     }
-    static lexInline(e, t) {
-      return new l(t).inlineTokens(e);
+    static lexInline(e, t2) {
+      return new l(t2).inlineTokens(e);
     }
     lex(e) {
       e = e.replace(x.carriageReturn, `
 `), this.blockTokens(e, this.tokens);
-      for (let t = 0; t < this.inlineQueue.length; t++) {
-        let n = this.inlineQueue[t];
+      for (let t2 = 0; t2 < this.inlineQueue.length; t2++) {
+        let n = this.inlineQueue[t2];
         this.inlineTokens(n.src, n.tokens);
       }
       return this.inlineQueue = [], this.tokens;
     }
-    blockTokens(e, t = [], n = false) {
+    blockTokens(e, t2 = [], n = false) {
       this.tokenizer.lexer = this, this.options.pedantic && (e = e.replace(x.tabCharGlobal, "    ").replace(x.spaceLine, ""));
       let s = 1 / 0;
       for (; e; ) {
@@ -3244,62 +3523,62 @@ ${Z.join(`
           break;
         }
         let r;
-        if (this.options.extensions?.block?.some((i) => (r = i.call({ lexer: this }, e, t)) ? (e = e.substring(r.raw.length), t.push(r), true) : false)) continue;
+        if (this.options.extensions?.block?.some((i) => (r = i.call({ lexer: this }, e, t2)) ? (e = e.substring(r.raw.length), t2.push(r), true) : false)) continue;
         if (r = this.tokenizer.space(e)) {
           e = e.substring(r.raw.length);
-          let i = t.at(-1);
+          let i = t2.at(-1);
           r.raw.length === 1 && i !== void 0 ? i.raw += `
-` : t.push(r);
+` : t2.push(r);
           continue;
         }
         if (r = this.tokenizer.code(e)) {
           e = e.substring(r.raw.length);
-          let i = t.at(-1);
+          let i = t2.at(-1);
           i?.type === "paragraph" || i?.type === "text" ? (i.raw += (i.raw.endsWith(`
 `) ? "" : `
 `) + r.raw, i.text += `
-` + r.text, this.inlineQueue.at(-1).src = i.text) : t.push(r);
+` + r.text, this.inlineQueue.at(-1).src = i.text) : t2.push(r);
           continue;
         }
         if (r = this.tokenizer.fences(e)) {
-          e = e.substring(r.raw.length), t.push(r);
+          e = e.substring(r.raw.length), t2.push(r);
           continue;
         }
         if (r = this.tokenizer.heading(e)) {
-          e = e.substring(r.raw.length), t.push(r);
+          e = e.substring(r.raw.length), t2.push(r);
           continue;
         }
         if (r = this.tokenizer.hr(e)) {
-          e = e.substring(r.raw.length), t.push(r);
+          e = e.substring(r.raw.length), t2.push(r);
           continue;
         }
         if (r = this.tokenizer.blockquote(e)) {
-          e = e.substring(r.raw.length), t.push(r);
+          e = e.substring(r.raw.length), t2.push(r);
           continue;
         }
         if (r = this.tokenizer.list(e)) {
-          e = e.substring(r.raw.length), t.push(r);
+          e = e.substring(r.raw.length), t2.push(r);
           continue;
         }
         if (r = this.tokenizer.html(e)) {
-          e = e.substring(r.raw.length), t.push(r);
+          e = e.substring(r.raw.length), t2.push(r);
           continue;
         }
         if (r = this.tokenizer.def(e)) {
           e = e.substring(r.raw.length);
-          let i = t.at(-1);
+          let i = t2.at(-1);
           i?.type === "paragraph" || i?.type === "text" ? (i.raw += (i.raw.endsWith(`
 `) ? "" : `
 `) + r.raw, i.text += `
-` + r.raw, this.inlineQueue.at(-1).src = i.text) : this.tokens.links[r.tag] || (this.tokens.links[r.tag] = { href: r.href, title: r.title }, t.push(r));
+` + r.raw, this.inlineQueue.at(-1).src = i.text) : this.tokens.links[r.tag] || (this.tokens.links[r.tag] = { href: r.href, title: r.title }, t2.push(r));
           continue;
         }
         if (r = this.tokenizer.table(e)) {
-          e = e.substring(r.raw.length), t.push(r);
+          e = e.substring(r.raw.length), t2.push(r);
           continue;
         }
         if (r = this.tokenizer.lheading(e)) {
-          e = e.substring(r.raw.length), t.push(r);
+          e = e.substring(r.raw.length), t2.push(r);
           continue;
         }
         let o = e;
@@ -3310,20 +3589,20 @@ ${Z.join(`
           }), i < 1 / 0 && i >= 0 && (o = e.substring(0, i + 1));
         }
         if (this.state.top && (r = this.tokenizer.paragraph(o))) {
-          let i = t.at(-1);
+          let i = t2.at(-1);
           n && i?.type === "paragraph" ? (i.raw += (i.raw.endsWith(`
 `) ? "" : `
 `) + r.raw, i.text += `
-` + r.text, this.inlineQueue.pop(), this.inlineQueue.at(-1).src = i.text) : t.push(r), n = o.length !== e.length, e = e.substring(r.raw.length);
+` + r.text, this.inlineQueue.pop(), this.inlineQueue.at(-1).src = i.text) : t2.push(r), n = o.length !== e.length, e = e.substring(r.raw.length);
           continue;
         }
         if (r = this.tokenizer.text(e)) {
           e = e.substring(r.raw.length);
-          let i = t.at(-1);
+          let i = t2.at(-1);
           i?.type === "text" ? (i.raw += (i.raw.endsWith(`
 `) ? "" : `
 `) + r.raw, i.text += `
-` + r.text, this.inlineQueue.pop(), this.inlineQueue.at(-1).src = i.text) : t.push(r);
+` + r.text, this.inlineQueue.pop(), this.inlineQueue.at(-1).src = i.text) : t2.push(r);
           continue;
         }
         if (e) {
@@ -3331,22 +3610,22 @@ ${Z.join(`
           break;
         }
       }
-      return this.state.top = true, t;
+      return this.state.top = true, t2;
     }
-    inline(e, t = []) {
-      return this.inlineQueue.push({ src: e, tokens: t }), t;
+    inline(e, t2 = []) {
+      return this.inlineQueue.push({ src: e, tokens: t2 }), t2;
     }
     linkInText(e) {
       if (!e.includes("[")) return false;
-      let t = this.tokenizer.rules.inline.link;
-      for (let n of e.matchAll(this.tokenizer.rules.inline.blockSkip)) if (t.test(n[0]) && e.charAt(n.index - 1) !== "!") return true;
+      let t2 = this.tokenizer.rules.inline.link;
+      for (let n of e.matchAll(this.tokenizer.rules.inline.blockSkip)) if (t2.test(n[0]) && e.charAt(n.index - 1) !== "!") return true;
       for (let n of e.matchAll(this.tokenizer.rules.inline.reflinkSearch)) {
         let s = n[0], r = s.lastIndexOf("[");
         if (!(s.charAt(0) === "!" || !Object.hasOwn(this.tokens.links, q(s.slice(r + 1, -1)))) && !(r > 1 && this.linkInText(s.slice(1, r - 1)))) return true;
       }
       return false;
     }
-    inlineTokens(e, t = []) {
+    inlineTokens(e, t2 = []) {
       this.tokenizer.lexer = this;
       let n = e;
       if (this.tokens.links && e.includes("[")) {
@@ -3374,47 +3653,47 @@ ${Z.join(`
         }
         s || (r = ""), s = false;
         let i;
-        if (this.options.extensions?.inline?.some((a) => (i = a.call({ lexer: this }, e, t)) ? (e = e.substring(i.raw.length), t.push(i), true) : false)) continue;
+        if (this.options.extensions?.inline?.some((a) => (i = a.call({ lexer: this }, e, t2)) ? (e = e.substring(i.raw.length), t2.push(i), true) : false)) continue;
         if (i = this.tokenizer.escape(e)) {
-          e = e.substring(i.raw.length), t.push(i);
+          e = e.substring(i.raw.length), t2.push(i);
           continue;
         }
         if (i = this.tokenizer.tag(e)) {
-          e = e.substring(i.raw.length), t.push(i);
+          e = e.substring(i.raw.length), t2.push(i);
           continue;
         }
         if (i = this.tokenizer.link(e)) {
-          e = e.substring(i.raw.length), t.push(i);
+          e = e.substring(i.raw.length), t2.push(i);
           continue;
         }
         if (i = this.tokenizer.reflink(e, this.tokens.links)) {
           e = e.substring(i.raw.length);
-          let a = t.at(-1);
-          i.type === "text" && a?.type === "text" ? (a.raw += i.raw, a.text += i.text) : t.push(i);
+          let a = t2.at(-1);
+          i.type === "text" && a?.type === "text" ? (a.raw += i.raw, a.text += i.text) : t2.push(i);
           continue;
         }
         if (i = this.tokenizer.emStrong(e, n, r)) {
-          e = e.substring(i.raw.length), t.push(i);
+          e = e.substring(i.raw.length), t2.push(i);
           continue;
         }
         if (i = this.tokenizer.codespan(e)) {
-          e = e.substring(i.raw.length), t.push(i);
+          e = e.substring(i.raw.length), t2.push(i);
           continue;
         }
         if (i = this.tokenizer.br(e)) {
-          e = e.substring(i.raw.length), t.push(i);
+          e = e.substring(i.raw.length), t2.push(i);
           continue;
         }
         if (i = this.tokenizer.del(e, n, r)) {
-          e = e.substring(i.raw.length), t.push(i);
+          e = e.substring(i.raw.length), t2.push(i);
           continue;
         }
         if (i = this.tokenizer.autolink(e)) {
-          e = e.substring(i.raw.length), t.push(i);
+          e = e.substring(i.raw.length), t2.push(i);
           continue;
         }
         if (!this.state.inLink && (i = this.tokenizer.url(e))) {
-          e = e.substring(i.raw.length), t.push(i);
+          e = e.substring(i.raw.length), t2.push(i);
           continue;
         }
         let u = e;
@@ -3426,8 +3705,8 @@ ${Z.join(`
         }
         if (i = this.tokenizer.inlineText(u)) {
           e = e.substring(i.raw.length), i.raw.slice(-1) !== "_" && (r = i.raw.slice(-1)), s = true;
-          let a = t.at(-1);
-          a?.type === "text" ? (a.raw += i.raw, a.text += i.text) : t.push(i);
+          let a = t2.at(-1);
+          a?.type === "text" ? (a.raw += i.raw, a.text += i.text) : t2.push(i);
           continue;
         }
         if (e) {
@@ -3435,12 +3714,12 @@ ${Z.join(`
           break;
         }
       }
-      return t;
+      return t2;
     }
     infiniteLoopError(e) {
-      let t = "Infinite loop on byte: " + e;
-      if (this.options.silent) console.error(t);
-      else throw new Error(t);
+      let t2 = "Infinite loop on byte: " + e;
+      if (this.options.silent) console.error(t2);
+      else throw new Error(t2);
     }
   };
   var S = class {
@@ -3452,8 +3731,8 @@ ${Z.join(`
     space(e) {
       return "";
     }
-    code({ text: e, lang: t, escaped: n }) {
-      let s = (t || "").match(x.notSpaceStart)?.[0], r = e ? e.replace(x.endingNewline, "") + `
+    code({ text: e, lang: t2, escaped: n }) {
+      let s = (t2 || "").match(x.notSpaceStart)?.[0], r = e ? e.replace(x.endingNewline, "") + `
 ` : "";
       return s ? '<pre><code class="language-' + O(s) + '">' + (n ? r : O(r, true)) + `</code></pre>
 ` : "<pre><code>" + (n ? r : O(r, true)) + `</code></pre>
@@ -3470,8 +3749,8 @@ ${this.parser.parse(e)}</blockquote>
     def(e) {
       return "";
     }
-    heading({ tokens: e, depth: t }) {
-      return `<h${t}>${this.parser.parseInline(e)}</h${t}>
+    heading({ tokens: e, depth: t2 }) {
+      return `<h${t2}>${this.parser.parseInline(e)}</h${t2}>
 `;
     }
     hr(e) {
@@ -3479,12 +3758,12 @@ ${this.parser.parse(e)}</blockquote>
 `;
     }
     list(e) {
-      let t = e.ordered, n = e.start, s = "";
+      let t2 = e.ordered, n = e.start, s = "";
       for (let i = 0; i < e.items.length; i++) {
         let u = e.items[i];
         s += this.listitem(u);
       }
-      let r = t ? "ol" : "ul", o = t && n !== 1 ? ' start="' + n + '"' : "";
+      let r = t2 ? "ol" : "ul", o = t2 && n !== 1 ? ' start="' + n + '"' : "";
       return "<" + r + o + `>
 ` + s + "</" + r + `>
 `;
@@ -3501,9 +3780,9 @@ ${this.parser.parse(e)}</blockquote>
 `;
     }
     table(e) {
-      let t = "", n = "";
+      let t2 = "", n = "";
       for (let r = 0; r < e.header.length; r++) n += this.tablecell(e.header[r]);
-      t += this.tablerow({ text: n });
+      t2 += this.tablerow({ text: n });
       let s = "";
       for (let r = 0; r < e.rows.length; r++) {
         let o = e.rows[r];
@@ -3513,7 +3792,7 @@ ${this.parser.parse(e)}</blockquote>
       }
       return s && (s = `<tbody>${s}</tbody>`), `<table>
 <thead>
-` + t + `</thead>
+` + t2 + `</thead>
 ` + s + `</table>
 `;
     }
@@ -3523,8 +3802,8 @@ ${e}</tr>
 `;
     }
     tablecell(e) {
-      let t = this.parser.parseInline(e.tokens), n = e.header ? "th" : "td";
-      return (e.align ? `<${n} align="${e.align}">` : `<${n}>`) + t + `</${n}>
+      let t2 = this.parser.parseInline(e.tokens), n = e.header ? "th" : "td";
+      return (e.align ? `<${n} align="${e.align}">` : `<${n}>`) + t2 + `</${n}>
 `;
     }
     strong({ tokens: e }) {
@@ -3542,20 +3821,20 @@ ${e}</tr>
     del({ tokens: e }) {
       return `<del>${this.parser.parseInline(e)}</del>`;
     }
-    link({ href: e, title: t, text: n, tokens: s, autolink: r }) {
+    link({ href: e, title: t2, text: n, tokens: s, autolink: r }) {
       let o = r ? O(n, true) : this.parser.parseInline(s), i = re(e);
       if (i === null) return o;
       e = O(i, r);
       let u = '<a href="' + e + '"';
-      return t && (u += ' title="' + O(t) + '"'), u += ">" + o + "</a>", u;
+      return t2 && (u += ' title="' + O(t2) + '"'), u += ">" + o + "</a>", u;
     }
-    image({ href: e, title: t, text: n, tokens: s }) {
+    image({ href: e, title: t2, text: n, tokens: s }) {
       s && (n = this.parser.parseInline(s, this.parser.textRenderer));
       let r = re(e);
       if (r === null) return O(n);
       e = r;
       let o = `<img src="${O(e)}" alt="${O(n)}"`;
-      return t && (o += ` title="${O(t)}"`), o += ">", o;
+      return t2 && (o += ` title="${O(t2)}"`), o += ">", o;
     }
     text(e) {
       return "tokens" in e && e.tokens ? this.parser.parseInline(e.tokens) : "escaped" in e && e.escaped ? e.text : O(e.text);
@@ -3600,72 +3879,72 @@ ${e}</tr>
     constructor(e) {
       this.options = e || y, this.options.renderer = this.options.renderer || new S(), this.renderer = this.options.renderer, this.renderer.options = this.options, this.renderer.parser = this, this.textRenderer = new z();
     }
-    static parse(e, t) {
-      return new l2(t).parse(e);
+    static parse(e, t2) {
+      return new l2(t2).parse(e);
     }
-    static parseInline(e, t) {
-      return new l2(t).parseInline(e);
+    static parseInline(e, t2) {
+      return new l2(t2).parseInline(e);
     }
     parse(e) {
       this.renderer.parser = this;
-      let t = "";
+      let t2 = "";
       for (let n = 0; n < e.length; n++) {
         let s = e[n];
         if (this.options.extensions?.renderers?.[s.type]) {
           let o = s, i = this.options.extensions.renderers[o.type].call({ parser: this }, o);
           if (i !== false || !["space", "hr", "heading", "code", "table", "blockquote", "list", "checkbox", "html", "def", "paragraph", "text"].includes(o.type)) {
-            t += i || "";
+            t2 += i || "";
             continue;
           }
         }
         let r = s;
         switch (r.type) {
           case "space": {
-            t += this.renderer.space(r);
+            t2 += this.renderer.space(r);
             break;
           }
           case "hr": {
-            t += this.renderer.hr(r);
+            t2 += this.renderer.hr(r);
             break;
           }
           case "heading": {
-            t += this.renderer.heading(r);
+            t2 += this.renderer.heading(r);
             break;
           }
           case "code": {
-            t += this.renderer.code(r);
+            t2 += this.renderer.code(r);
             break;
           }
           case "table": {
-            t += this.renderer.table(r);
+            t2 += this.renderer.table(r);
             break;
           }
           case "blockquote": {
-            t += this.renderer.blockquote(r);
+            t2 += this.renderer.blockquote(r);
             break;
           }
           case "list": {
-            t += this.renderer.list(r);
+            t2 += this.renderer.list(r);
             break;
           }
           case "checkbox": {
-            t += this.renderer.checkbox(r);
+            t2 += this.renderer.checkbox(r);
             break;
           }
           case "html": {
-            t += this.renderer.html(r);
+            t2 += this.renderer.html(r);
             break;
           }
           case "def": {
-            t += this.renderer.def(r);
+            t2 += this.renderer.def(r);
             break;
           }
           case "paragraph": {
-            t += this.renderer.paragraph(r);
+            t2 += this.renderer.paragraph(r);
             break;
           }
           case "text": {
-            t += this.renderer.text(r);
+            t2 += this.renderer.text(r);
             break;
           }
           default: {
@@ -3675,9 +3954,9 @@ ${e}</tr>
           }
         }
       }
-      return t;
+      return t2;
     }
-    parseInline(e, t = this.renderer) {
+    parseInline(e, t2 = this.renderer) {
       this.renderer.parser = this;
       let n = "";
       for (let s = 0; s < e.length; s++) {
@@ -3692,47 +3971,47 @@ ${e}</tr>
         let o = r;
         switch (o.type) {
           case "escape": {
-            n += t.text(o);
+            n += t2.text(o);
             break;
           }
           case "html": {
-            n += t.html(o);
+            n += t2.html(o);
             break;
           }
           case "link": {
-            n += t.link(o);
+            n += t2.link(o);
             break;
           }
           case "image": {
-            n += t.image(o);
+            n += t2.image(o);
             break;
           }
           case "checkbox": {
-            n += t.checkbox(o);
+            n += t2.checkbox(o);
             break;
           }
           case "strong": {
-            n += t.strong(o);
+            n += t2.strong(o);
             break;
           }
           case "em": {
-            n += t.em(o);
+            n += t2.em(o);
             break;
           }
           case "codespan": {
-            n += t.codespan(o);
+            n += t2.codespan(o);
             break;
           }
           case "br": {
-            n += t.br(o);
+            n += t2.br(o);
             break;
           }
           case "del": {
-            n += t.del(o);
+            n += t2.del(o);
             break;
           }
           case "text": {
-            n += t.text(o);
+            n += t2.text(o);
             break;
           }
           default: {
@@ -3786,50 +4065,50 @@ ${e}</tr>
     constructor(...e) {
       this.use(...e);
     }
-    walkTokens(e, t) {
+    walkTokens(e, t2) {
       let n = [];
-      for (let s of e) switch (n = n.concat(t.call(this, s)), s.type) {
+      for (let s of e) switch (n = n.concat(t2.call(this, s)), s.type) {
         case "table": {
           let r = s;
-          for (let o of r.header) n = n.concat(this.walkTokens(o.tokens, t));
-          for (let o of r.rows) for (let i of o) n = n.concat(this.walkTokens(i.tokens, t));
+          for (let o of r.header) n = n.concat(this.walkTokens(o.tokens, t2));
+          for (let o of r.rows) for (let i of o) n = n.concat(this.walkTokens(i.tokens, t2));
           break;
         }
         case "list": {
           let r = s;
-          n = n.concat(this.walkTokens(r.items, t));
+          n = n.concat(this.walkTokens(r.items, t2));
           break;
         }
         default: {
           let r = s;
           this.defaults.extensions?.childTokens?.[r.type] ? this.defaults.extensions.childTokens[r.type].forEach((o) => {
             let i = r[o].flat(1 / 0);
-            n = n.concat(this.walkTokens(i, t));
-          }) : r.tokens && (n = n.concat(this.walkTokens(r.tokens, t)));
+            n = n.concat(this.walkTokens(i, t2));
+          }) : r.tokens && (n = n.concat(this.walkTokens(r.tokens, t2)));
         }
       }
       return n;
     }
     use(...e) {
-      let t = this.defaults.extensions || { renderers: {}, childTokens: {} };
+      let t2 = this.defaults.extensions || { renderers: {}, childTokens: {} };
       return e.forEach((n) => {
         let s = { ...n };
         if (s.async = this.defaults.async || s.async || false, n.extensions && (n.extensions.forEach((r) => {
           if (!r.name) throw new Error("extension name required");
           if ("renderer" in r) {
-            let o = t.renderers[r.name];
-            o ? t.renderers[r.name] = function(...i) {
+            let o = t2.renderers[r.name];
+            o ? t2.renderers[r.name] = function(...i) {
               let u = r.renderer.apply(this, i);
               return u === false && (u = o.apply(this, i)), u;
-            } : t.renderers[r.name] = r.renderer;
+            } : t2.renderers[r.name] = r.renderer;
           }
           if ("tokenizer" in r) {
             if (!r.level || r.level !== "block" && r.level !== "inline") throw new Error("extension level must be 'block' or 'inline'");
-            let o = t[r.level];
-            o ? o.unshift(r.tokenizer) : t[r.level] = [r.tokenizer], r.start && (r.level === "block" ? t.startBlock ? t.startBlock.push(r.start) : t.startBlock = [r.start] : r.level === "inline" && (t.startInline ? t.startInline.push(r.start) : t.startInline = [r.start]));
+            let o = t2[r.level];
+            o ? o.unshift(r.tokenizer) : t2[r.level] = [r.tokenizer], r.start && (r.level === "block" ? t2.startBlock ? t2.startBlock.push(r.start) : t2.startBlock = [r.start] : r.level === "inline" && (t2.startInline ? t2.startInline.push(r.start) : t2.startInline = [r.start]));
           }
-          "childTokens" in r && r.childTokens && (t.childTokens[r.name] = r.childTokens);
-        }), s.extensions = t), n.renderer) {
+          "childTokens" in r && r.childTokens && (t2.childTokens[r.name] = r.childTokens);
+        }), s.extensions = t2), n.renderer) {
           let r = this.defaults.renderer || new S(this.defaults);
           for (let o in n.renderer) {
             if (!(o in r)) throw new Error(`renderer '${o}' does not exist`);
@@ -3892,11 +4171,11 @@ ${e}</tr>
     setOptions(e) {
       return this.defaults = { ...this.defaults, ...e }, this;
     }
-    lexer(e, t) {
-      return R.lex(e, t ?? this.defaults);
+    lexer(e, t2) {
+      return R.lex(e, t2 ?? this.defaults);
     }
-    parser(e, t) {
-      return T.parse(e, t ?? this.defaults);
+    parser(e, t2) {
+      return T.parse(e, t2 ?? this.defaults);
     }
     parseMarkdown(e) {
       return (n, s) => {
@@ -3921,14 +4200,14 @@ ${e}</tr>
         }
       };
     }
-    onError(e, t) {
+    onError(e, t2) {
       return (n) => {
         if (n.message += `
 Please report this to https://github.com/markedjs/marked.`, e) {
           let s = "<p>An error occurred:</p><pre>" + O(n.message + "", true) + "</pre>";
-          return t ? Promise.resolve(s) : s;
+          return t2 ? Promise.resolve(s) : s;
         }
-        if (t) return Promise.reject(n);
+        if (t2) return Promise.reject(n);
         throw n;
       };
     }
@@ -3979,19 +4258,19 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     if (Array.isArray(r)) return r;
   }
   function _iterableToArrayLimit(r, l3) {
-    var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
-    if (null != t) {
+    var t2 = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
+    if (null != t2) {
       var e, n, i, u, a = [], f = true, o = false;
       try {
-        if (i = (t = t.call(r)).next, 0 === l3) {
-          if (Object(t) !== t) return;
+        if (i = (t2 = t2.call(r)).next, 0 === l3) {
+          if (Object(t2) !== t2) return;
           f = false;
-        } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l3); f = true) ;
+        } else for (; !(f = (e = i.call(t2)).done) && (a.push(e.value), a.length !== l3); f = true) ;
       } catch (r2) {
         o = true, n = r2;
       } finally {
         try {
-          if (!f && null != t.return && (u = t.return(), Object(u) !== u)) return;
+          if (!f && null != t2.return && (u = t2.return(), Object(u) !== u)) return;
         } finally {
           if (o) throw n;
         }
@@ -4008,18 +4287,18 @@ Please report this to https://github.com/markedjs/marked.`, e) {
   function _unsupportedIterableToArray(r, a) {
     if (r) {
       if ("string" == typeof r) return _arrayLikeToArray(r, a);
-      var t = {}.toString.call(r).slice(8, -1);
-      return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
+      var t2 = {}.toString.call(r).slice(8, -1);
+      return "Object" === t2 && r.constructor && (t2 = r.constructor.name), "Map" === t2 || "Set" === t2 ? Array.from(r) : "Arguments" === t2 || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t2) ? _arrayLikeToArray(r, a) : void 0;
     }
   }
   function AsyncGenerator(e) {
-    var t, n;
-    function resume(t2, n2) {
+    var t2, n;
+    function resume(t3, n2) {
       try {
-        var r = e[t2](n2), o = r.value, u = o instanceof _OverloadYield;
+        var r = e[t3](n2), o = r.value, u = o instanceof _OverloadYield;
         Promise.resolve(u ? o.v : o).then(function(n3) {
           if (u) {
-            var i = "return" === t2 && o.k ? t2 : "next";
+            var i = "return" === t3 && o.k ? t3 : "next";
             if (!o.k || n3.done) return resume(i, n3);
             n3 = e[i](n3).value;
           }
@@ -4032,10 +4311,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       }
     }
     function settle(e2, r) {
-      2 === e2 ? t.reject(r) : t.resolve({
+      2 === e2 ? t2.reject(r) : t2.resolve({
         value: r,
         done: e2
-      }), (t = t.next) ? resume(t.key, t.arg) : n = null;
+      }), (t2 = t2.next) ? resume(t2.key, t2.arg) : n = null;
     }
     this._invoke = function(e2, r) {
       return new Promise(function(o, u) {
@@ -4046,7 +4325,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
           reject: u,
           next: null
         };
-        n ? n = n.next = i : (t = n = i, resume(e2, r));
+        n ? n = n.next = i : (t2 = n = i, resume(e2, r));
       });
     }, "function" != typeof e.return && (this.return = void 0);
   }
@@ -5485,10 +5764,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         } catch (_2) {
         }
       }
-      const body = doc.body || doc.documentElement;
-      if (dirty && leadingWhitespace) body.insertBefore(document2.createTextNode(leadingWhitespace), body.childNodes[0] || null);
+      const body2 = doc.body || doc.documentElement;
+      if (dirty && leadingWhitespace) body2.insertBefore(document2.createTextNode(leadingWhitespace), body2.childNodes[0] || null);
       if (NAMESPACE === HTML_NAMESPACE) return getElementsByTagName.call(doc, WHOLE_DOCUMENT ? "html" : "body")[0];
-      return WHOLE_DOCUMENT ? doc.documentElement : body;
+      return WHOLE_DOCUMENT ? doc.documentElement : body2;
     };
     const _createNodeIterator = function _createNodeIterator2(root2) {
       const doc = getOwnerDocument ? getOwnerDocument(root2) : root2.ownerDocument;
@@ -5801,7 +6080,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     };
     DOMPurify.sanitize = function(dirty) {
       let cfg = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
-      let body = null;
+      let body2 = null;
       let importedNode = null;
       let currentNode = null;
       let returnNode = null;
@@ -5841,19 +6120,19 @@ Please report this to https://github.com/markedjs/marked.`, e) {
           throw error;
         }
       } else if (_isNode(dirty)) {
-        body = _initDocument("<!---->");
-        importedNode = body.ownerDocument.importNode(dirty, true);
-        if (importedNode.nodeType === NODE_TYPE.element && importedNode.nodeName === "BODY") body = importedNode;
-        else if (importedNode.nodeName === "HTML") body = importedNode;
-        else body.appendChild(importedNode);
-        _sanitizeAttachedShadowRoots(body);
+        body2 = _initDocument("<!---->");
+        importedNode = body2.ownerDocument.importNode(dirty, true);
+        if (importedNode.nodeType === NODE_TYPE.element && importedNode.nodeName === "BODY") body2 = importedNode;
+        else if (importedNode.nodeName === "HTML") body2 = importedNode;
+        else body2.appendChild(importedNode);
+        _sanitizeAttachedShadowRoots(body2);
       } else {
         if (!RETURN_DOM && !SAFE_FOR_TEMPLATES && !WHOLE_DOCUMENT && dirty.indexOf("<") === -1) return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? _createTrustedHTML(dirty) : dirty;
-        body = _initDocument(dirty);
-        if (!body) return RETURN_DOM ? null : RETURN_TRUSTED_TYPE ? emptyHTML : "";
+        body2 = _initDocument(dirty);
+        if (!body2) return RETURN_DOM ? null : RETURN_TRUSTED_TYPE ? emptyHTML : "";
       }
-      if (body && FORCE_BODY) _forceRemove(body.firstChild);
-      const walkRoot = inPlace ? dirty : body;
+      if (body2 && FORCE_BODY) _forceRemove(body2.firstChild);
+      const walkRoot = inPlace ? dirty : body2;
       try {
         const nodeIterator = _createNodeIterator(walkRoot);
         while (currentNode = nodeIterator.nextNode()) {
@@ -5883,16 +6162,16 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         return dirty;
       }
       if (RETURN_DOM) {
-        if (SAFE_FOR_TEMPLATES) _scrubTemplateExpressions2(body);
+        if (SAFE_FOR_TEMPLATES) _scrubTemplateExpressions2(body2);
         if (RETURN_DOM_FRAGMENT) {
-          returnNode = createDocumentFragment.call(body.ownerDocument);
-          while (body.firstChild) returnNode.appendChild(body.firstChild);
-        } else returnNode = body;
+          returnNode = createDocumentFragment.call(body2.ownerDocument);
+          while (body2.firstChild) returnNode.appendChild(body2.firstChild);
+        } else returnNode = body2;
         if (ALLOWED_ATTR.shadowroot || ALLOWED_ATTR.shadowrootmode) returnNode = importNode.call(originalDocument, returnNode, true);
         return returnNode;
       }
-      let serializedHTML = WHOLE_DOCUMENT ? body.outerHTML : body.innerHTML;
-      if (WHOLE_DOCUMENT && ALLOWED_TAGS["!doctype"] && body.ownerDocument && body.ownerDocument.doctype && body.ownerDocument.doctype.name && regExpTest(DOCTYPE_NAME, body.ownerDocument.doctype.name)) serializedHTML = "<!DOCTYPE " + body.ownerDocument.doctype.name + ">\n" + serializedHTML;
+      let serializedHTML = WHOLE_DOCUMENT ? body2.outerHTML : body2.innerHTML;
+      if (WHOLE_DOCUMENT && ALLOWED_TAGS["!doctype"] && body2.ownerDocument && body2.ownerDocument.doctype && body2.ownerDocument.doctype.name && regExpTest(DOCTYPE_NAME, body2.ownerDocument.doctype.name)) serializedHTML = "<!DOCTYPE " + body2.ownerDocument.doctype.name + ">\n" + serializedHTML;
       if (SAFE_FOR_TEMPLATES) serializedHTML = _stripTemplateExpressions(serializedHTML);
       return trustedTypesPolicy && RETURN_TRUSTED_TYPE ? _createTrustedHTML(serializedHTML) : serializedHTML;
     };
@@ -6055,20 +6334,20 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     };
     content.addEventListener("click", onLink);
     content.addEventListener("auxclick", onLink);
-    const status = document.createElement("p");
-    status.className = "document-status";
+    const status2 = document.createElement("p");
+    status2.className = "document-status";
     const issue = document.createElement("p");
     issue.className = "document-issue";
     const retryRoot = document.createElement("span");
     let onRetry = () => {
     };
     const retry = mountButton(retryRoot, {
-      label: "Retry document",
+      label: t("Retry document"),
       variant: "secondary",
       size: "sm",
       onClick: () => onRetry()
     });
-    root2.append(content, presentationIssue, status, issue, retryRoot);
+    root2.append(content, presentationIssue, status2, issue, retryRoot);
     let displayed = null;
     let format = null;
     let renderingFailed = false;
@@ -6087,7 +6366,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
             const pre = document.createElement("pre");
             pre.textContent = next.text;
             content.replaceChildren(pre);
-            presentationIssue.textContent = "Document rendering failed. Original source is shown.";
+            presentationIssue.textContent = t("Document rendering failed. Original source is shown.");
             renderingFailed = true;
           }
           displayed = next.text;
@@ -6095,8 +6374,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         }
         content.hidden = !next.hasContent;
         presentationIssue.hidden = !next.hasContent || !renderingFailed;
-        status.textContent = next.status ?? "";
-        status.hidden = !next.status;
+        status2.textContent = t(next.status ?? "");
+        status2.hidden = !next.status;
         issue.textContent = next.error ?? "";
         issue.hidden = !next.error;
         retryRoot.hidden = !next.error;
@@ -6118,12 +6397,12 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     const summary = document.createElement("p");
     summary.className = "content-status";
     const progressRoot = document.createElement("div");
-    const progress = mountProgress(progressRoot, { value: 0, label: "Task completion" });
+    const progress = mountProgress(progressRoot, { value: 0, label: t("Task completion") });
     const issue = document.createElement("p");
     issue.className = "notice error";
     const retryRoot = document.createElement("span");
     const retry = mountButton(retryRoot, {
-      label: "Retry tasks",
+      label: t("Retry tasks"),
       variant: "secondary",
       size: "sm",
       onClick: retryRead
@@ -6140,12 +6419,15 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       update(state, retryable = true, emptyMessage = "") {
         const tasks = state?.value ?? [];
         const completed = tasks.filter((task) => task.done).length;
-        summary.textContent = tasks.length || state?.error || !retryable ? "" : state?.pending ? "Loading tasks\u2026" : emptyMessage || "No tasks tracked yet.";
+        summary.textContent = tasks.length || state?.error || !retryable ? "" : state?.pending ? "Loading tasks\u2026" : emptyMessage || t("No tasks tracked yet.");
         summary.hidden = !summary.textContent;
         progressRoot.hidden = !tasks.length;
         progress.update({
           value: tasks.length ? Math.round(completed / tasks.length * 100) : 0,
-          label: tasks.length ? `${completed} of ${tasks.length} tasks complete` : "Task completion"
+          label: tasks.length ? bi(
+            `\u0412\u044B\u043F\u043E\u043B\u043D\u0435\u043D\u043E ${completed} \u0438\u0437 ${tasks.length}`,
+            `${completed} of ${tasks.length} tasks complete`
+          ) : "Task completion"
         });
         issue.textContent = retryable ? state?.error?.message ?? "" : "";
         issue.hidden = !issue.textContent;
@@ -6172,7 +6454,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
           }
           item.row.classList.toggle("done", task.done);
           item.mark.textContent = task.done ? "\u2713" : "\u25CB";
-          item.mark.setAttribute("aria-label", task.done ? "Complete" : "Pending");
+          item.mark.setAttribute("aria-label", task.done ? t("Complete") : t("Pending"));
           item.label.textContent = task.description;
           if (list.children[index] !== item.row)
             list.insertBefore(item.row, list.children[index] ?? null);
@@ -6218,8 +6500,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     shell.hidden = true;
     const header = document.createElement("header");
     header.className = "detail-header";
-    const body = document.createElement("div");
-    body.className = "view-body detail-body";
+    const body2 = document.createElement("div");
+    body2.className = "view-body detail-body";
     const titleRow = document.createElement("div");
     titleRow.className = "detail-title-row";
     const backRoot = document.createElement("span");
@@ -6245,8 +6527,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     path.setAttribute("stroke-linejoin", "round");
     chevron.append(path);
     backButton.prepend(chevron);
-    backButton.setAttribute("aria-label", "Back to changes");
-    backButton.title = "Back to changes";
+    backButton.setAttribute("aria-label", t("Back to changes"));
+    backButton.title = t("Back to changes");
     const title = document.createElement("h1");
     title.id = "change-detail-title";
     shell.setAttribute("aria-labelledby", title.id);
@@ -6263,8 +6545,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       onClick: callbacks.copyName
     });
     const copyButton = copyRoot.querySelector("button");
-    copyButton.setAttribute("aria-label", "Copy change name");
-    copyButton.title = "Copy change name";
+    copyButton.setAttribute("aria-label", t("Copy change name"));
+    copyButton.title = t("Copy change name");
     addButtonIcon(copyRoot, "copy");
     nameGroup.append(title, copyRoot);
     titleGroup.append(nameGroup);
@@ -6275,7 +6557,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     const refreshRoot = document.createElement("span");
     refreshRoot.className = "refresh-control";
     const refresh = mountButton(refreshRoot, {
-      label: "refresh",
+      label: t("refresh"),
       variant: "ghost",
       size: "sm",
       onClick: callbacks.refresh
@@ -6284,24 +6566,24 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     const deleteRoot = document.createElement("span");
     deleteRoot.className = "detail-delete";
     const deleteAction = mountButton(deleteRoot, {
-      label: "delete",
+      label: t("delete"),
       variant: "destructive",
       size: "sm",
       onClick: callbacks.delete
     });
     const deleteButton = deleteRoot.querySelector("button");
-    deleteButton.setAttribute("aria-label", "Delete change");
-    deleteButton.title = "Delete change";
+    deleteButton.setAttribute("aria-label", t("Delete change"));
+    deleteButton.title = t("Delete change");
     addButtonIcon(deleteRoot, "delete");
     headingActions.append(refreshRoot, deleteRoot);
     const goal = document.createElement("p");
     goal.className = "goal";
     goal.setAttribute("role", "region");
-    goal.setAttribute("aria-label", "Recorded objective");
+    goal.setAttribute("aria-label", t("Technical ID"));
     goal.tabIndex = 0;
     const stage = document.createElement("div");
     stage.className = "stage-label";
-    const stageBadge = mountBadge(stage, { label: "Planning", tone: "neutral" });
+    const stageBadge = mountBadge(stage, { label: t("Planning"), tone: "neutral" });
     titleRow.append(stage);
     const unavailable = document.createElement("p");
     unavailable.className = "notice error detail-issue";
@@ -6310,7 +6592,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     const refreshMessage = document.createElement("span");
     const retryRoot = document.createElement("span");
     const retry = mountButton(retryRoot, {
-      label: "Retry",
+      label: t("Retry"),
       variant: "secondary",
       size: "sm",
       onClick: callbacks.refresh
@@ -6318,7 +6600,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     refreshIssue.append(refreshMessage, retryRoot);
     const tabs = document.createElement("nav");
     tabs.className = "artifact-tabs";
-    tabs.setAttribute("aria-label", "Planning artefacts");
+    tabs.setAttribute("aria-label", t("Planning artefacts"));
     const toolbar = document.createElement("div");
     toolbar.className = "detail-toolbar";
     toolbar.append(tabs, headingActions);
@@ -6340,21 +6622,21 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     const action = mountPrimaryAction(actionRoot);
     const verifyRoot = document.createElement("span");
     const verify = mountButton(verifyRoot, {
-      label: "verify",
+      label: t("verify"),
       variant: "secondary",
       size: "sm",
       onClick: () => callbacks.action("verify")
     });
     const exploreRoot = document.createElement("span");
     const explore = mountButton(exploreRoot, {
-      label: "explore",
+      label: t("explore"),
       variant: "secondary",
       size: "sm",
       onClick: () => callbacks.action("explore")
     });
     footer.append(exploreRoot, verifyRoot, actionRoot);
-    body.append(toolbar, unavailable, refreshIssue, content);
-    shell.append(header, body, footer);
+    body2.append(toolbar, unavailable, refreshIssue, content);
+    shell.append(header, body2, footer);
     root2.append(shell);
     let currentOwner = null;
     let tabSignature = "";
@@ -6368,7 +6650,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         else if (id.startsWith("artifact:")) callbacks.selectArtifact(id.slice("artifact:".length));
       }
     });
-    tabs.querySelector("[role=tablist]")?.setAttribute("aria-label", "Planning artefacts");
+    tabs.querySelector("[role=tablist]")?.setAttribute("aria-label", t("Planning artefacts"));
     const files = /* @__PURE__ */ new Map();
     let changeId = "";
     let artifactId = "";
@@ -6392,12 +6674,12 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         const summary = document.createElement("summary");
         const path2 = document.createElement("span");
         path2.textContent = descriptor.label;
-        const status = document.createElement("span");
-        status.className = "document-status";
-        summary.append(path2, status);
-        const body2 = document.createElement("div");
-        const view = mountDocumentView(body2, { openUrl: callbacks.openUrl });
-        node.append(summary, body2);
+        const status2 = document.createElement("span");
+        status2.className = "document-status";
+        summary.append(path2, status2);
+        const body3 = document.createElement("div");
+        const view = mountDocumentView(body3, { openUrl: callbacks.openUrl });
+        node.append(summary, body3);
         node.addEventListener("toggle", () => {
           if (node.open) {
             for (const other of files.values()) if (other.node !== node) other.node.open = false;
@@ -6420,9 +6702,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
           reset();
           changeId = state.change.id;
         }
-        title.textContent = state.change.id;
+        title.textContent = state.change.goal || state.change.id;
         areas.update(state.change.affectedAreas);
-        goal.textContent = state.change.goal ?? "Goal unavailable";
+        goal.textContent = state.change.id;
         stageBadge.update({
           label: stageLabel(state.change.stage),
           tone: tones[state.change.stage]
@@ -6448,11 +6730,11 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         currentOwner = taskArtifact(state.change);
         const items = state.change.artifacts.map((item) => ({
           id: tabId(item.id),
-          label: artifactLabels[item.id] ?? item.id,
+          label: t(artifactLabels[item.id] ?? item.id),
           count: item.id === "specs" ? (state.change.documents ?? []).filter((document2) => document2.artifactId === item.id).length : item.id === currentOwner ? state.change.totalTasks : void 0
         }));
         if (!currentOwner)
-          items.push({ id: fallbackId, label: "Tasks", count: state.change.totalTasks });
+          items.push({ id: fallbackId, label: t("Tasks"), count: state.change.totalTasks });
         const activeId = state.activeView === "tasks" ? currentOwner ? tabId(currentOwner) : fallbackId : tabId(state.selectedArtifact);
         const signature = JSON.stringify([items, activeId]);
         if (signature !== tabSignature) {
@@ -6468,7 +6750,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         tabs.querySelectorAll("[role=tab]").forEach((tab, index) => {
           const artifact = state.change.artifacts[index];
           if (!artifact) return;
-          const label = `${items[index].label} \xB7 ${readiness[artifact.status]}${items[index].count === void 0 ? "" : ` ${items[index].count}`}`;
+          const label = `${items[index].label} \xB7 ${t(readiness[artifact.status])}${items[index].count === void 0 ? "" : ` ${items[index].count}`}`;
           if (tab.getAttribute("aria-label") !== label) tab.setAttribute("aria-label", label);
         });
         content.setAttribute(
@@ -6482,7 +6764,10 @@ Please report this to https://github.com/markedjs/marked.`, e) {
           const prerequisite = state.change.artifacts.find((item) => item.id === id);
           return prerequisite && prerequisite.status !== "done" && prerequisite.status !== "skipped";
         }) ?? [];
-        const readinessMessage = selected?.status === "ready" ? "Ready to write this artefact. Continue planning in chat." : selected?.status === "blocked" ? unresolved.length ? `Blocked until ${unresolved.join(", ")} is written or skipped.` : "Blocked by planning prerequisites; their details are not available." : selected?.status === "skipped" ? "This artefact was skipped." : "";
+        const readinessMessage = selected?.status === "ready" ? t("Ready to write this artefact. Continue planning in chat.") : selected?.status === "blocked" ? unresolved.length ? bi(
+          `\u0421\u043D\u0430\u0447\u0430\u043B\u0430 \u043F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u044C\u0442\u0435 \u0438\u043B\u0438 \u043F\u0440\u043E\u043F\u0443\u0441\u0442\u0438\u0442\u0435: ${unresolved.join(", ")}.`,
+          `Blocked until ${unresolved.join(", ")} is written or skipped.`
+        ) : t("Blocked by planning prerequisites; their details are not available.") : selected?.status === "skipped" ? t("This artefact was skipped.") : "";
         documents.hidden = state.activeView === "tasks";
         tasks.hidden = state.activeView !== "tasks";
         if (state.activeView === "tasks" && !state.refreshError)
@@ -6499,7 +6784,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         const available = (state.change.documents ?? []).filter(
           (item) => item.artifactId === state.selectedArtifact
         );
-        readinessNote.textContent = state.activeView === "document" && !state.unavailable && !available.length ? readinessMessage || (state.selectedArtifact ? "This artefact has no available documents yet." : "This change has no available planning documents.") : "";
+        readinessNote.textContent = state.activeView === "document" && !state.unavailable && !available.length ? readinessMessage || (state.selectedArtifact ? t("This artefact has no available documents yet.") : t("This change has no available planning documents.")) : "";
         readinessNote.hidden = !!state.refreshError || !readinessNote.textContent;
         content.hidden = !!state.refreshError;
         const multi = state.selectedArtifact === "specs" || available.length > 1;
@@ -6513,8 +6798,8 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         for (const [index, descriptor] of available.entries()) {
           const key = documentKey(descriptor.artifactId, descriptor.selector);
           const entry = file(descriptor);
-          const status = entry.node.querySelector("summary .document-status");
-          if (status) status.textContent = state.files.get(key)?.error ? " \xB7 Read failed" : "";
+          const status2 = entry.node.querySelector("summary .document-status");
+          if (status2) status2.textContent = state.files.get(key)?.error ? t(" \xB7 Read failed") : "";
           const current2 = state.files.get(key);
           entry.view.update({
             text: current2?.value ?? "",
@@ -6557,7 +6842,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     const heading = document.createElement("h2");
     heading.id = "new-change-title";
     dialog.setAttribute("aria-labelledby", heading.id);
-    heading.textContent = "New change";
+    heading.textContent = t("New change");
     const nameRoot = document.createElement("div");
     const goalRoot = document.createElement("div");
     let name = "";
@@ -6567,9 +6852,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     let draftScope = null;
     let messageText = "";
     let generation = 0;
-    let disposed = false;
+    let disposed2 = false;
     const nameField = mountTextField(nameRoot, {
-      label: "Change name",
+      label: t("Change name"),
       value: "",
       placeholder: "add-change-board",
       mono: true,
@@ -6579,9 +6864,9 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       }
     });
     const goalField = mountTextField(goalRoot, {
-      label: "Goal",
+      label: t("Goal"),
       value: "",
-      placeholder: "What should this change make possible?",
+      placeholder: t("What should this change make possible?"),
       multiline: true,
       rows: 4,
       onChange: (value) => {
@@ -6599,26 +6884,26 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     const inspectRoot = document.createElement("span");
     const forgetRoot = document.createElement("span");
     const dismiss = mountButton(cancelRoot, {
-      label: "cancel",
+      label: t("cancel"),
       variant: "secondary",
       size: "sm",
       onClick: () => dialog.close()
     });
     const submit = mountButton(submitRoot, {
-      label: "create",
+      label: t("create"),
       variant: "default",
       size: "sm",
       onClick: () => void submitChange()
     });
     addButtonIcon(submitRoot, "create");
     const retry = mountButton(retryRoot, {
-      label: "Retry read",
+      label: t("Retry read"),
       variant: "secondary",
       size: "sm",
       onClick: () => void reconcile()
     });
     const inspect = mountButton(inspectRoot, {
-      label: "Inspect change",
+      label: t("Inspect change"),
       variant: "secondary",
       size: "sm",
       onClick: () => {
@@ -6628,7 +6913,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       }
     });
     const forget = mountButton(forgetRoot, {
-      label: "Dismiss attempt",
+      label: t("Dismiss attempt"),
       variant: "ghost",
       size: "sm",
       onClick: () => {
@@ -6641,7 +6926,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
           discardDraft();
           if (mode === "read-failed") {
             attempt = originalAttempt;
-            messageText = "Creation outcome is unknown. Retry the read before creating again.";
+            messageText = t("Creation outcome is unknown. Retry the read before creating again.");
           } else mode = "editing";
           dialog.close();
           return;
@@ -6676,7 +6961,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       if (!attempt && draftScope && !sameContext(draftScope)) discardDraft();
     });
     function paint() {
-      if (disposed) return;
+      if (disposed2) return;
       const current = callbacks.current();
       const origin = attempt?.scope ?? draftScope;
       const usable = origin ? sameContext(origin) : current !== null;
@@ -6707,7 +6992,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
           original.scope.root,
           original.scope.planning
         );
-        if (disposed || currentGeneration !== generation) return;
+        if (disposed2 || currentGeneration !== generation) return;
         if (listing.changes.some((entry) => entry.id === original.name)) {
           mode = "observed-existing";
           messageText = "Creation outcome is unknown. An existing change with this name was found for inspection.";
@@ -6716,14 +7001,14 @@ Please report this to https://github.com/markedjs/marked.`, e) {
           messageText = "Creation outcome is unknown. The original project was refreshed; no matching change was found.";
         }
       } catch (caught) {
-        if (disposed || currentGeneration !== generation) return;
+        if (disposed2 || currentGeneration !== generation) return;
         mode = "read-failed";
         messageText = `Creation outcome is unknown. ${caught instanceof Error ? caught.message : "The original project could not be read."} Retry the read before creating again.`;
       }
       paint();
     }
     async function submitChange() {
-      if (mode !== "editing" || disposed) return;
+      if (mode !== "editing" || disposed2) return;
       const current = callbacks.current();
       if (!current || draftScope && !sameContext(draftScope) || attempt && !sameContext(attempt.scope)) {
         paint();
@@ -6732,11 +7017,13 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       const submittedName = name.trim();
       const submittedGoal = goal.trim();
       if (!isChangeName(submittedName)) {
-        nameField.update({ error: "Use lowercase letters or digits separated by single hyphens." });
+        nameField.update({
+          error: t("Use lowercase letters or digits separated by single hyphens.")
+        });
         return;
       }
       if (!submittedGoal) {
-        goalField.update({ error: "Goal is required." });
+        goalField.update({ error: t("Goal is required.") });
         return;
       }
       attempt = { scope: current, name: submittedName, goal: submittedGoal };
@@ -6747,7 +7034,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       paint();
       try {
         await client.create(original.scope, original.name, original.goal);
-        if (disposed || currentGeneration !== generation) return;
+        if (disposed2 || currentGeneration !== generation) return;
         mode = "confirmed-success";
         messageText = "Change created.";
         paint();
@@ -6763,7 +7050,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         messageText = "";
         paint();
       } catch (caught) {
-        if (disposed || currentGeneration !== generation) return;
+        if (disposed2 || currentGeneration !== generation) return;
         if (caught instanceof ServiceRequestError && !caught.outcome && caught.code !== "CLI_TIMEOUT") {
           mode = "editing";
           messageText = caught.message;
@@ -6776,7 +7063,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     }
     return {
       open() {
-        if (!disposed && !dialog.open) {
+        if (!disposed2 && !dialog.open) {
           if (!attempt && draftScope && !sameContext(draftScope)) discardDraft();
           draftScope ??= callbacks.current();
           paint();
@@ -6785,7 +7072,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       },
       update: paint,
       dispose() {
-        disposed = true;
+        disposed2 = true;
         generation++;
         dismiss.dispose();
         submit.dispose();
@@ -6816,7 +7103,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     const deleteRoot = document.createElement("span");
     let target = null;
     let mode = "confirming";
-    let disposed = false;
+    let disposed2 = false;
     const unresolved = /* @__PURE__ */ new Set();
     const key = (attempt) => JSON.stringify([
       attempt.scope.directory,
@@ -6835,7 +7122,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       message.textContent = "";
     }
     const cancel = mountButton(cancelRoot, {
-      label: "cancel",
+      label: t("cancel"),
       variant: "secondary",
       size: "sm",
       onClick: () => {
@@ -6843,7 +7130,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       }
     });
     const retry = mountButton(retryRoot, {
-      label: "Retry read",
+      label: t("Retry read"),
       variant: "secondary",
       size: "sm",
       onClick: () => {
@@ -6851,7 +7138,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       }
     });
     const confirm = mountButton(deleteRoot, {
-      label: "delete",
+      label: t("delete"),
       variant: "destructive",
       size: "sm",
       onClick: () => {
@@ -6895,7 +7182,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
           attempt.scope.root,
           attempt.scope.planning
         );
-        if (disposed || !matches(attempt) || target !== attempt) return;
+        if (disposed2 || !matches(attempt) || target !== attempt) return;
         unresolved.delete(key(attempt));
         if (!listing.changes.some((item) => item.id === attempt.name)) {
           close();
@@ -6906,10 +7193,12 @@ Please report this to https://github.com/markedjs/marked.`, e) {
           display();
         }
       } catch {
-        if (disposed || !matches(attempt) || target !== attempt) return;
+        if (disposed2 || !matches(attempt) || target !== attempt) return;
         unresolved.add(key(attempt));
         mode = "unresolved";
-        message.textContent = "Deletion outcome is unresolved. Retry the read of the original project before another attempt.";
+        message.textContent = t(
+          "Deletion outcome is unresolved. Retry the read of the original project before another attempt."
+        );
         display();
       }
     }
@@ -6919,12 +7208,12 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       display();
       try {
         await client.delete(attempt.scope, attempt.name);
-        if (disposed || !matches(attempt) || target !== attempt) return;
+        if (disposed2 || !matches(attempt) || target !== attempt) return;
         unresolved.delete(key(attempt));
         close();
         callbacks.removed(attempt);
       } catch (caught) {
-        if (disposed) return;
+        if (disposed2) return;
         if (caught instanceof ServiceRequestError && caught.outcome !== "unknown" && caught.code !== "CHANGE_UNAVAILABLE") {
           if (!matches(attempt) || target !== attempt) return;
           mode = "present";
@@ -6937,12 +7226,17 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     }
     return {
       open(attempt) {
-        if (dialog.open || disposed || !matches(attempt)) return;
+        if (dialog.open || disposed2 || !matches(attempt)) return;
         target = attempt;
         mode = unresolved.has(key(attempt)) ? "unresolved" : "confirming";
-        heading.textContent = `Delete ${attempt.name}?`;
-        description.textContent = `Permanently remove the planning folder for ${attempt.name}? This does not undo implementation or delete main specifications.`;
-        message.textContent = mode === "unresolved" ? "Deletion outcome is unresolved. Retry the read of the original project before another attempt." : "";
+        heading.textContent = bi(`\u0423\u0434\u0430\u043B\u0438\u0442\u044C ${attempt.name}?`, `Delete ${attempt.name}?`);
+        description.textContent = bi(
+          `\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u043F\u0430\u043F\u043A\u0443 \u043F\u043B\u0430\u043D\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F ${attempt.name} \u0431\u0435\u0437 \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E\u0441\u0442\u0438 \u0432\u043E\u0441\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u044F? \u0420\u0435\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u0438 \u043E\u0441\u043D\u043E\u0432\u043D\u044B\u0435 \u0441\u043F\u0435\u0446\u0438\u0444\u0438\u043A\u0430\u0446\u0438\u0438 \u043E\u0441\u0442\u0430\u043D\u0443\u0442\u0441\u044F.`,
+          `Permanently remove the planning folder for ${attempt.name}? This does not undo implementation or delete main specifications.`
+        );
+        message.textContent = mode === "unresolved" ? t(
+          "Deletion outcome is unresolved. Retry the read of the original project before another attempt."
+        ) : "";
         display();
         dialog.showModal();
         cancelRoot.querySelector("button")?.focus();
@@ -6956,7 +7250,7 @@ Please report this to https://github.com/markedjs/marked.`, e) {
         }
       },
       dispose() {
-        disposed = true;
+        disposed2 = true;
         dialog.close();
         cancel.dispose();
         retry.dispose();
@@ -6971,11 +7265,13 @@ Please report this to https://github.com/markedjs/marked.`, e) {
     const dialog = document.createElement("dialog");
     const heading = document.createElement("h2");
     heading.id = "archive-all-title";
-    heading.textContent = "Archive all completed changes?";
+    heading.textContent = t("Archive all completed changes?");
     dialog.setAttribute("aria-labelledby", heading.id);
     const description = document.createElement("p");
     description.id = "archive-all-description";
-    description.textContent = "This creates a new session and sends a prompt to archive completed changes in this project. Unfinished changes will be skipped. The board stays open; use refresh to see updates.";
+    description.textContent = t(
+      "This creates a new session and sends a prompt to archive completed changes in this project. Unfinished changes will be skipped. The board stays open; use refresh to see updates."
+    );
     dialog.setAttribute("aria-describedby", description.id);
     const actions2 = document.createElement("div");
     actions2.className = "archive-actions";
@@ -6990,13 +7286,13 @@ Please report this to https://github.com/markedjs/marked.`, e) {
       opener = null;
     }
     const cancel = mountButton(cancelRoot, {
-      label: "cancel",
+      label: t("cancel"),
       variant: "secondary",
       size: "sm",
       onClick: close
     });
     const start = mountButton(startRoot, {
-      label: "start archiving",
+      label: t("start archiving"),
       size: "sm",
       onClick: () => {
         if (!origin || origin !== callbacks.current() || !callbacks.canStart()) return;
@@ -7157,7 +7453,7 @@ Report archived, skipped and blocked changes with reasons. If none qualify, make
     let archivePending = false;
     const worktreePending = /* @__PURE__ */ new Set();
     const worktreeKey = (scope2, id) => JSON.stringify([scope2.directory, scope2.root, scope2.planning, id]);
-    let disposed = false;
+    let disposed2 = false;
     function invalidate() {
       epoch++;
       boardOperation++;
@@ -7393,7 +7689,7 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
       const key = worktreeKey(captured, change.id);
       if (worktreePending.has(key)) return;
       const expectedSession = sessionId;
-      const current = () => !disposed && scope === captured && epoch === originatingEpoch && sessionId === expectedSession && !unavailableIds.has(change.id) && changes.some((item) => item.id === change.id && item.stage === change.stage);
+      const current = () => !disposed2 && scope === captured && epoch === originatingEpoch && sessionId === expectedSession && !unavailableIds.has(change.id) && changes.some((item) => item.id === change.id && item.stage === change.stage);
       worktreePending.add(key);
       render();
       let dispatched = false;
@@ -7450,7 +7746,7 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
         });
       } finally {
         worktreePending.delete(key);
-        if (!disposed) render();
+        if (!disposed2) render();
       }
     }
     function applyContentError(state, captured, change) {
@@ -7649,7 +7945,7 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
         });
       } finally {
         archivePending = false;
-        if (!disposed) render();
+        if (!disposed2) render();
       }
     }
     const archiveView = mountArchiveDialog(appRoot, {
@@ -7673,6 +7969,7 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
       }
     });
     const detailRoot = document.createElement("div");
+    detailRoot.className = "studio-detail-root";
     appRoot.append(detailRoot);
     const deleteView = mountDeleteDialog(appRoot, client, {
       current: () => selectedChange && scope ? { scope, epoch, selection: selection2, name: selectedChange.id } : null,
@@ -7695,7 +7992,7 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
         render();
         loadBoard(true, true);
         queueMicrotask(
-          () => appRoot.querySelector('input[aria-label="Search changes"]')?.focus()
+          () => appRoot.querySelector("input[data-board-search]")?.focus()
         );
       }
     });
@@ -7742,7 +8039,7 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
           const opener = [...appRoot.querySelectorAll(".card-main")].find(
             (button2) => button2.textContent === name
           );
-          (opener ?? appRoot.querySelector('input[aria-label="Search changes"]'))?.focus();
+          (opener ?? appRoot.querySelector("input[data-board-search]"))?.focus();
         });
       },
       selectArtifact,
@@ -7796,6 +8093,7 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
         }))
       });
       boardView.setVisible(!selectedChange);
+      detailRoot.hidden = !selectedChange;
       detailView.update(
         selectedChange ? {
           change: selectedChange,
@@ -7840,7 +8138,7 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
       render();
     });
     return () => {
-      disposed = true;
+      disposed2 = true;
       epoch++;
       selection2++;
       detailOpening++;
@@ -7861,15 +8159,75 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
   var root = document.querySelector("#root");
   if (!root) throw new Error("Panel root is missing");
   var host = connectHost();
+  var bar = document.createElement("header");
+  bar.className = "studio-header";
+  var brand = document.createElement("div");
+  brand.className = "studio-brand";
+  brand.innerHTML = '<span class="studio-logo" aria-hidden="true">S</span><div><strong>OpenSpec Studio</strong><span class="studio-subtitle"></span></div>';
+  var language = document.createElement("select");
+  language.className = "language-select";
+  language.add(new Option("\u0420\u0443\u0441\u0441\u043A\u0438\u0439", "ru"));
+  language.add(new Option("English", "en"));
+  language.value = preferences.locale;
+  var status = document.createElement("span");
+  status.className = "preference-status";
+  status.setAttribute("role", "status");
+  var body = document.createElement("div");
+  body.className = "studio-body";
+  bar.append(brand, status, language);
+  root.append(bar, body);
+  var unmount = mountController(host, body);
+  var disposed = false;
+  var loaded = false;
+  var touched = false;
+  function labels() {
+    language.value = preferences.locale;
+    language.setAttribute("aria-label", t("Interface language"));
+    brand.querySelector(".studio-subtitle").textContent = t("Read-only planning view");
+    document.documentElement.lang = preferences.locale;
+  }
+  function remount() {
+    unmount();
+    body.replaceChildren();
+    unmount = mountController(host, body);
+    labels();
+  }
+  var saving = Promise.resolve();
+  onPersist(() => {
+    touched = true;
+    const snapshot = { ...preferences };
+    void (saving = saving.catch(() => {
+    }).then(() => host.storage.set("studio-preferences", snapshot))).then(() => {
+      status.textContent = "";
+    }).catch(() => {
+      status.textContent = preferences.locale === "ru" ? "\u041D\u0435 \u0443\u0434\u0430\u043B\u043E\u0441\u044C \u0441\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u043D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0443" : "Could not save preference";
+    });
+  });
+  language.onchange = () => {
+    touched = true;
+    preferences.locale = language.value === "en" ? "en" : "ru";
+    remount();
+    savePreferences();
+  };
+  labels();
   var offTheme = host.onReady((ready2) => {
     applyHostReady(ready2, document.documentElement);
     document.documentElement.classList.add("oc-themed");
     root.style.visibility = "visible";
+    if (!loaded) {
+      loaded = true;
+      void host.storage.get("studio-preferences").then((value) => {
+        if (disposed || touched || !value) return;
+        restorePreferences(value);
+        remount();
+      }).catch(() => {
+      });
+    }
   });
-  var unmount = mountController(host, root);
   window.addEventListener(
     "pagehide",
     () => {
+      disposed = true;
       offTheme();
       unmount();
       host.dispose();
