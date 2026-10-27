@@ -2275,7 +2275,8 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
     sort: "name",
     stage: "all",
     attention: false,
-    jiraBase: ""
+    jiraBase: "",
+    uiScale: 100
   };
   var persist = () => {
   };
@@ -2288,6 +2289,7 @@ textarea.oc-sdk-input { height: auto; padding: 8px 12px; resize: vertical; }
   function restorePreferences(value) {
     if (!value || typeof value !== "object") return;
     const p = value;
+    preferences.uiScale = typeof p.uiScale === "number" && Number.isFinite(p.uiScale) ? Math.max(75, Math.min(200, Math.round(p.uiScale))) : 100;
     preferences.jiraBase = normalizeJiraBase(p.jiraBase) ?? "";
     preferences.locale = p.locale === "en" ? "en" : "ru";
     preferences.stage = ["all", "planning", "ready", "progress", "complete"].includes(String(p.stage)) ? String(p.stage) : "all";
@@ -8358,6 +8360,28 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
   var jiraInput = document.createElement("input");
   jiraInput.type = "url";
   jiraInput.placeholder = "https://jira.example.com";
+  var scaleLabel = document.createElement("label");
+  var scaleCaption = document.createElement("span");
+  var scaleControls = document.createElement("div");
+  scaleControls.className = "scale-controls";
+  var scaleInput = document.createElement("select");
+  for (const value of [75, 90, 100, 110, 125, 150, 175, 200])
+    scaleInput.add(new Option(`${value}%`, String(value)));
+  var scaleReset = document.createElement("button");
+  scaleReset.type = "button";
+  scaleReset.textContent = "100%";
+  scaleReset.onclick = () => {
+    scaleInput.value = "100";
+  };
+  scaleControls.append(scaleInput, scaleReset);
+  scaleLabel.append(scaleCaption, scaleControls);
+  function applyScale() {
+    const scale = preferences.uiScale / 100;
+    root.style.zoom = String(scale);
+    root.style.width = `${100 / scale}%`;
+    root.style.height = `${100 / scale}%`;
+    document.documentElement.style.setProperty("--studio-scale", String(scale));
+  }
   var jiraSave = document.createElement("button");
   jiraSave.type = "button";
   var closeSettings = document.createElement("button");
@@ -8374,6 +8398,7 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
     projectPath,
     projectHint,
     jiraLabel,
+    scaleLabel,
     jiraStatus,
     settingsActions
   );
@@ -8387,6 +8412,7 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
   }
   settingsButton.onclick = () => {
     jiraInput.value = preferences.jiraBase;
+    scaleInput.value = String(preferences.uiScale);
     jiraStatus.textContent = "";
     settings.showModal();
     jiraInput.focus();
@@ -8405,8 +8431,11 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
       jiraStatus.textContent = preferences.locale === "ru" ? "\u0423\u043A\u0430\u0436\u0438\u0442\u0435 HTTP(S)-\u0430\u0434\u0440\u0435\u0441 \u0431\u0435\u0437 \u043F\u0430\u0440\u043E\u043B\u044F, \u043F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u043E\u0432 \u0438 \u044F\u043A\u043E\u0440\u044F" : "Enter an HTTP(S) URL without credentials, query or fragment";
       return;
     }
+    const linksChanged = preferences.jiraBase !== base;
     preferences.jiraBase = base;
-    remount();
+    preferences.uiScale = Number(scaleInput.value);
+    applyScale();
+    if (linksChanged) remount();
     savePreferences();
     settings.close();
   };
@@ -8415,6 +8444,14 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
   var loaded = false;
   var touched = false;
   function labels() {
+    scaleCaption.textContent = preferences.locale === "ru" ? "\u041C\u0430\u0441\u0448\u0442\u0430\u0431 \u0438\u043D\u0442\u0435\u0440\u0444\u0435\u0439\u0441\u0430 Studio" : "Studio interface scale";
+    scaleInput.setAttribute("aria-label", scaleCaption.textContent);
+    scaleInput.value = String(preferences.uiScale);
+    scaleReset.setAttribute(
+      "aria-label",
+      preferences.locale === "ru" ? "\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C \u043C\u0430\u0441\u0448\u0442\u0430\u0431 \u043D\u0430 100%" : "Reset scale to 100%"
+    );
+    applyScale();
     settingsTitle.textContent = preferences.locale === "ru" ? "\u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438" : "Settings";
     settingsButton.setAttribute("aria-label", settingsTitle.textContent);
     settingsButton.title = settingsTitle.textContent;
@@ -8462,6 +8499,7 @@ Complete all remaining tasks in ${target}, then verify the implementation agains
     currentDirectory = ready2.directory;
     contextLabels();
     applyHostReady(ready2, document.documentElement);
+    applyScale();
     document.documentElement.classList.add("oc-themed");
     root.style.visibility = "visible";
     if (!loaded) {

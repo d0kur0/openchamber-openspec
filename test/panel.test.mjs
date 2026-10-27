@@ -4911,3 +4911,53 @@ test("Studio settings modal follows host project and leaves the board chrome unc
     await page.close();
   });
 });
+
+test("Studio interface scale preserves detail, fits the frame and can be reset", async () => {
+  await withPanel(async (browser, url) => {
+    const page = await browser.newPage({ viewport: { width: 900, height: 800 } });
+    await page.goto(url);
+    const panel = page.frameLocator("iframe");
+    await panel.getByRole("button", { name: "Read the proposal", exact: true }).waitFor();
+    await panel.getByRole("button", { name: "Read the proposal", exact: true }).click();
+    await panel.getByRole("button", { name: "Настройки", exact: true }).click();
+    await panel.getByRole("combobox", { name: "Масштаб интерфейса Studio" }).selectOption("150");
+    await panel.getByRole("button", { name: "Сохранить", exact: true }).click();
+    assert.equal(await panel.locator("#root").evaluate((e) => e.style.zoom), "1.5");
+    assert.ok(await panel.locator(".studio-detail-root").isVisible());
+    const fits = await panel.locator("#root").evaluate((e) => {
+      const r = e.getBoundingClientRect();
+      return r.width <= innerWidth + 2 && r.height <= innerHeight + 2;
+    });
+    assert.equal(fits, true);
+    await panel.getByRole("button", { name: "Настройки", exact: true }).click();
+    await panel.getByRole("button", { name: "Сбросить масштаб на 100%" }).click();
+    await panel.getByRole("button", { name: "Отмена", exact: true }).click();
+    assert.equal(await panel.locator("#root").evaluate((e) => e.style.zoom), "1.5");
+    await panel.getByRole("button", { name: "Настройки", exact: true }).click();
+    await panel.getByRole("button", { name: "Сбросить масштаб на 100%" }).click();
+    await panel.getByRole("button", { name: "Сохранить", exact: true }).click();
+    assert.equal(await panel.locator("#root").evaluate((e) => e.style.zoom), "1");
+    await page.close();
+  });
+});
+
+test("Studio scale extremes keep settings recoverable in a narrow frame", async () => {
+  await withPanel(async (browser, url) => {
+    const page = await browser.newPage({ viewport: { width: 390, height: 720 } });
+    await page.goto(url);
+    const panel = page.frameLocator("iframe");
+    for (const value of ["200", "75", "100"]) {
+      await panel.getByRole("button", { name: "Настройки", exact: true }).click();
+      const fits = await panel.getByRole("dialog").evaluate((e) => {
+        const r = e.getBoundingClientRect();
+        return (
+          r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1
+        );
+      });
+      assert.equal(fits, true);
+      await panel.getByRole("combobox", { name: "Масштаб интерфейса Studio" }).selectOption(value);
+      await panel.getByRole("button", { name: "Сохранить", exact: true }).click();
+    }
+    await page.close();
+  });
+});

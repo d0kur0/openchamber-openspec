@@ -553,7 +553,7 @@
         backdrop-filter: blur(4px);
       }
       dialog:not(.detail) {
-        width: min(440px, calc(100vw - 32px));
+        width: min(440px, calc(100vw / var(--studio-scale, 1) - 32px));
         border: 1px solid var(--oc-border, #30363c);
         border-radius: 10px;
         background: var(--oc-bg, #15191c);
@@ -1139,8 +1139,8 @@
         outline: 2px solid var(--oc-focus);
       }
       dialog.studio-settings {
-        width: min(440px, calc(100vw - 32px));
-        max-height: calc(100dvh - 32px);
+        width: min(440px, calc(100vw / var(--studio-scale, 1) - 32px));
+        max-height: calc(100dvh / var(--studio-scale, 1) - 32px);
         overflow: auto;
         padding: 24px;
         color: var(--oc-fg);
@@ -1188,6 +1188,20 @@
         display: flex;
         justify-content: flex-end;
         gap: 8px;
+      }
+      .scale-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .scale-controls select {
+        flex: 1;
+        min-width: 0;
+        color: inherit;
+        background: var(--oc-bg);
+        border: 1px solid var(--oc-border);
+        border-radius: 6px;
+        padding: 8px;
       }
       .studio-settings button {
         padding: 8px 12px;

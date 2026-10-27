@@ -9,6 +9,7 @@ export const preferences = {
   stage: "all",
   attention: false,
   jiraBase: "",
+  uiScale: 100,
 };
 let persist = () => {};
 export function onPersist(save: () => void) {
@@ -20,6 +21,10 @@ export function savePreferences() {
 export function restorePreferences(value: unknown) {
   if (!value || typeof value !== "object") return;
   const p = value as Record<string, unknown>;
+  preferences.uiScale =
+    typeof p.uiScale === "number" && Number.isFinite(p.uiScale)
+      ? Math.max(75, Math.min(200, Math.round(p.uiScale)))
+      : 100;
   preferences.jiraBase = normalizeJiraBase(p.jiraBase) ?? "";
   preferences.locale = p.locale === "en" ? "en" : "ru";
   preferences.stage = ["all", "planning", "ready", "progress", "complete"].includes(String(p.stage))

@@ -54,6 +54,28 @@ const jiraCaption = document.createElement("span");
 const jiraInput = document.createElement("input");
 jiraInput.type = "url";
 jiraInput.placeholder = "https://jira.example.com";
+const scaleLabel = document.createElement("label");
+const scaleCaption = document.createElement("span");
+const scaleControls = document.createElement("div");
+scaleControls.className = "scale-controls";
+const scaleInput = document.createElement("select");
+for (const value of [75, 90, 100, 110, 125, 150, 175, 200])
+  scaleInput.add(new Option(`${value}%`, String(value)));
+const scaleReset = document.createElement("button");
+scaleReset.type = "button";
+scaleReset.textContent = "100%";
+scaleReset.onclick = () => {
+  scaleInput.value = "100";
+};
+scaleControls.append(scaleInput, scaleReset);
+scaleLabel.append(scaleCaption, scaleControls);
+function applyScale() {
+  const scale = preferences.uiScale / 100;
+  root!.style.zoom = String(scale);
+  root!.style.width = `${100 / scale}%`;
+  root!.style.height = `${100 / scale}%`;
+  document.documentElement.style.setProperty("--studio-scale", String(scale));
+}
 const jiraSave = document.createElement("button");
 jiraSave.type = "button";
 const closeSettings = document.createElement("button");
@@ -70,6 +92,7 @@ settings.append(
   projectPath,
   projectHint,
   jiraLabel,
+  scaleLabel,
   jiraStatus,
   settingsActions,
 );
@@ -87,6 +110,7 @@ function contextLabels() {
 }
 settingsButton.onclick = () => {
   jiraInput.value = preferences.jiraBase;
+  scaleInput.value = String(preferences.uiScale);
   jiraStatus.textContent = "";
   settings.showModal();
   jiraInput.focus();
@@ -113,8 +137,11 @@ jiraSave.onclick = () => {
         : "Enter an HTTP(S) URL without credentials, query or fragment";
     return;
   }
+  const linksChanged = preferences.jiraBase !== base;
   preferences.jiraBase = base;
-  remount();
+  preferences.uiScale = Number(scaleInput.value);
+  applyScale();
+  if (linksChanged) remount();
   savePreferences();
   settings.close();
 };
@@ -123,6 +150,15 @@ let unmount = mountController(host, body),
   loaded = false,
   touched = false;
 function labels() {
+  scaleCaption.textContent =
+    preferences.locale === "ru" ? "Масштаб интерфейса Studio" : "Studio interface scale";
+  scaleInput.setAttribute("aria-label", scaleCaption.textContent);
+  scaleInput.value = String(preferences.uiScale);
+  scaleReset.setAttribute(
+    "aria-label",
+    preferences.locale === "ru" ? "Сбросить масштаб на 100%" : "Reset scale to 100%",
+  );
+  applyScale();
   settingsTitle.textContent = preferences.locale === "ru" ? "Настройки" : "Settings";
   settingsButton.setAttribute("aria-label", settingsTitle.textContent);
   settingsButton.title = settingsTitle.textContent;
@@ -180,6 +216,7 @@ const offTheme = host.onReady((ready) => {
   currentDirectory = ready.directory;
   contextLabels();
   applyHostReady(ready, document.documentElement);
+  applyScale();
   document.documentElement.classList.add("oc-themed");
   root.style.visibility = "visible";
   if (!loaded) {

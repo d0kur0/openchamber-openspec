@@ -82,3 +82,17 @@ test("Jira URLs validate the base, preserve context paths and require complete k
   assert.equal(russianHeading("Scenario: Проверка"), "Сценарий: Проверка");
   assert.equal(russianHeading("Неизвестный раздел"), "Неизвестный раздел");
 });
+
+test("interface scale restores safely with old, invalid and out-of-range preferences", () => {
+  for (const value of [undefined, "150", NaN, Infinity]) {
+    restorePreferences({ uiScale: value });
+    assert.equal(preferences.uiScale, 100);
+  }
+  restorePreferences({ uiScale: 150 });
+  assert.equal(preferences.uiScale, 150);
+  restorePreferences({ uiScale: 500 });
+  assert.equal(preferences.uiScale, 200);
+  restorePreferences({ uiScale: 10 });
+  assert.equal(preferences.uiScale, 75);
+  restorePreferences({});
+});
